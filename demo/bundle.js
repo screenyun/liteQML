@@ -403,94 +403,82 @@ class Timer extends CoreObject {
 }
     
 
-
-class App extends Item {
+class Test extends Rectangle {
     constructor(parent, params) {
         params = params? params: {};
-
-        super(parent, params);
-        this.xChanged.connect(this.onXChanged.bind(this));
-
-        class App_Rectangle_0 extends Rectangle {
-            constructor(parent, params) {
-                params = params? params: {};
-                params.x = 100;
-                params.y = () => {let x=this.x;
+        params.x = 100;
+        params.y = () => {let x=this.x;
  return 100+x
 };;
-                params.width = 100;
-                params.height = 100;
-                params.color = 'black';
-                params.radius = 10;
+        params.width = 100;
+        params.height = 100;
+        params.color = 'black';
+        params.radius = 10;
+
+        super(parent, params);
+        chainConnect(this, 'x', () => {
+            this._yDirty = true; this.yChanged.emit(); })
+        this.xChanged.connect(this.onXChanged.bind(this));
+
+        class Test_Text_0 extends Text {
+            constructor(parent, params) {
+                params = params? params: {};
+                params.color = 'white';
+                params.text = '羅凱旋';
+                params.rotation = 45;
 
                 super(parent, params);
-                chainConnect(this, 'x', () => {
-                    this._yDirty = true; this.yChanged.emit(); })
-
-                class App_Rectangle_0_Text_0 extends Text {
-                    constructor(parent, params) {
-                        params = params? params: {};
-                        params.color = 'white';
-                        params.text = '羅凱旋';
-                        params.rotation = 45;
-
-                        super(parent, params);
-
-                    }
-
-                }
-    
-
-                class App_Rectangle_0_MouseArea_1 extends MouseArea {
-                    constructor(parent, params) {
-                        params = params? params: {};
-                        params.width = 100;
-                        params.height = 100;
-
-                        super(parent, params);
-                        this.clicked.connect(this.onClicked.bind(this));
-
-                    }
-                    onClicked() { 
-
-{
-                
-                this.parent.x+=10
-            }
-                    }
-
-                }
-    
-
-                class App_Rectangle_0_Timer_2 extends Timer {
-                    constructor(parent, params) {
-                        params = params? params: {};
-                        params.running = true;
-                        params.repeat = true;
-                        params.interval = 100;
-
-                        super(parent, params);
-                        this.triggered.connect(this.onTriggered.bind(this));
-
-                    }
-                    onTriggered() { 
-
-{
-                this.parent.rotation+=10;
-            }
-                    }
-
-                }
-    
-                this.appendChild(new App_Rectangle_0_Text_0(this));
-                this.appendChild(new App_Rectangle_0_MouseArea_1(this));
-                this.appendChild(new App_Rectangle_0_Timer_2(this));
 
             }
 
         }
     
-        this.appendChild(new App_Rectangle_0(this));
+
+        class Test_MouseArea_1 extends MouseArea {
+            constructor(parent, params) {
+                params = params? params: {};
+                params.width = 100;
+                params.height = 100;
+
+                super(parent, params);
+                this.clicked.connect(this.onClicked.bind(this));
+
+            }
+            onClicked() { 
+
+{
+            
+            this.parent.x+=10
+        }
+            }
+
+        }
+    
+
+        class Test_Timer_2 extends Timer {
+            constructor(parent, params) {
+                params = params? params: {};
+                params.running = true;
+                params.repeat = true;
+                params.interval = 100;
+
+                super(parent, params);
+                this.triggered.connect(this.onTriggered.bind(this));
+
+            }
+            onTriggered() { 
+
+{
+            this.parent.rotation+=10;
+        }
+            }
+
+        }
+    
+        this.appendChild(new Test_Text_0(this));
+        this.appendChild(new Test_MouseArea_1(this));
+        this.appendChild(new Test_Timer_2(this));
+        Test.prototype.onCompleted.call(this);
 
     }
     onXChanged() { 
@@ -498,6 +486,36 @@ class App extends Item {
 {
         console.log(this.x)
     }
+    }
+    onCompleted() { 
+
+{
+        this.y
+    }
+    }
+
+}
+    
+
+
+class App extends Item {
+    constructor(parent, params) {
+        params = params? params: {};
+
+        super(parent, params);
+
+        class App_Test_0 extends Test {
+            constructor(parent, params) {
+                params = params? params: {};
+
+                super(parent, params);
+
+            }
+
+        }
+    
+        this.appendChild(new App_Test_0(this));
+
     }
 
 }

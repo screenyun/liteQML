@@ -163,6 +163,10 @@ class ImportSolver {
             this.importPath.push(path);
     }
 
+    additionalPath() {
+        return this.importPath.slice(1)
+    }
+
     addImport(uri, version, as) {
         let qmldir;
         let path = uri.split('.').join('/');
@@ -274,10 +278,15 @@ export class ClassIR {
         
         if(ast.type) {
             let resolved = this.resolveType(ast.type);
+            if(!resolved)
+                throw new Error(`Cannot resolve ${ast.type}`);
             if(!(resolved in this.consumedType)) {
                 let resolvedDir = dirname(resolved);
                 
                 let parent = new ClassIR({scriptPath: resolvedDir, consumedType: this.consumedType});
+                // copy importPath
+                for(let path of this.importSolver.additionalPath())
+                    parent.addImportPath(path)
                 
                 parent.load(resolved);
                 this.consumedType[resolved] = parent;
