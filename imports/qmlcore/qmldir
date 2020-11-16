@@ -1,0 +1,4 @@
+Timer 1.0 Timer.qml
+Animation 1.0 Animation.qml
+PropertyAnimation 1.0 PropertyAnimation.qml
+NumberAnimation 1.0 NumberAnimation.qml

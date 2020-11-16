@@ -1,0 +1,5 @@
+Item 1.0 Item.qml
+Rectangle 1.0 Rectangle.qml
+Image 1.0 Image.qml
+Text 1.0 Text.qml
+MouseArea 1.0 MouseArea.qml

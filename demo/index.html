@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <script src="concrete.min.js"></script>
+        <script src="bundle.js"></script>
+        <style>
+            #qml {
+                width: 800;
+                height: 600;
+                display: inline-block;
+            }
+        </style>
+        <script type="text/javascript">
+            let viewport;
+            let layer;
+            function render() {
+                layer.scene.clear();
+                layer.hit.clear();
+                layer.scene.context.font = "18px Bold 微軟正黑體";
+                qml.rootObject.draw(layer);
+                viewport.render();
+                requestAnimationFrame(render);
+            }
+        </script>
+    </head>
+    <body>
+        <div id="qml"></div>
+        <script>
+
+            var concreteContainer = document.getElementById('qml');
+            // create viewport
+            viewport = new Concrete.Viewport({
+                width: 800,
+                height: 600,
+                container: concreteContainer
+            });
+            layer = new Concrete.Layer();
+            viewport.add(layer);
+            render();
+
+            function findObjectByKey(key) {
+                return window.qml.mouseAreas[key];
+                /*
+                let stack = [qml.rootObject];
+                while(stack.length) {
+                    let top = stack[0];
+                    stack.shift();
+
+                    if(top.key == key) {
+                        return top;
+                    }
+
+                    for(let child of top.children) {
+                        if(child instanceof Item) 
+                            stack.push(child);
+                    }
+                }
+                return null;
+                */
+            }
+
+            function inputEvent(event, evt) {
+                let rect = concreteContainer.getBoundingClientRect()
+                let x = evt.clientX - rect.left, y = evt.clientY - rect.top,
+                key = viewport.getIntersection(x, y)
+                if(key!=-1) {
+                    let obj = findObjectByKey(key);
+                    
+                    obj[event]();
+                }
+            }
+
+            concreteContainer.onmousemove = (evt) => inputEvent('mouseMoved', evt);
+            concreteContainer.onclick = (evt) => inputEvent('mouseClicked', evt);
+        
+          </script>
+    </body>
+</html>

@@ -1,0 +1,34 @@
+* Schedule [52%]
+** DONE EventEmitter
+** DONE CoreObject [2/2]
+   - [X] signal
+   - [X] property
+** DONE Property Animation System
+** DONE Type Checking
+** DONE Improve NodeJS Compatibility [2/2]
+   - [X] Compiler
+   - [X] Generated Code
+** DONE Expression Property Binding
+** DONE Browser Rendering Test
+** DONE Search Path [2/2]
+   - [X] Search import path
+   - [X] Import module 'As' something
+** DONE Separate Consume and Generate
+** TODO QML id Scoping
+** TODO Drawing Module [1/1]
+   - [X] concrete.js for browser
+   - [ ] nanovg/glfw3 backend for desktop
+   - [ ] Skia backend for desktop
+** TODO Process argopt [1/2]
+   - [X] Basic input output
+   - [ ] ES Target Selection
+** TODO Dep Tracking Through Grammar [1/2]
+   - [X] Expression
+   - [ ] FunctionBody
+** TODO Add Test for Dep Tracking
+** TODO ES6 PEG Grammar [1/2]
+   - [ ] Template Literal
+   - [ ] Arrow Function
+   - [X] Analyze identifier dep
+** TODO Compile to binary executable
+** TODO Language Server Protocol
