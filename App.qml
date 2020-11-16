@@ -4,7 +4,7 @@ import browser.qmlcore 1.0
 Item {
     Rectangle {
         x: 100
-        y: 100
+        y: 100+x
         width: 100
         height: 100
         color: "black"
@@ -20,8 +20,8 @@ Item {
             width: 100
             height: 100
             onClicked: {
-                console.log('耖')
-                this.parent.color = "red"
+                
+                this.parent.x+=10
             }
         }
 

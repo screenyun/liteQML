@@ -312,6 +312,7 @@ export class ClassIR {
 
             this.analyzeFunctionDep();
             this.analyzeHandlerDep();
+            this.analyzeExpressionDep();
 
             
         } else
@@ -404,7 +405,7 @@ export class ClassIR {
     analyzeFunctionDep() {
         for(let [fname, fvalue] of Object.entries(this.funcs)) {
             let ast = parseFunction(fvalue.src);
-            let scope = ['undefined', 'NaN', 'console', 'this', ...fvalue.params.map(x => x.name)];
+            let scope = ['undefined', 'NaN', 'console', 'this', 'globalThis', ...fvalue.params.map(x => x.name)];
             let deps = analyzeDep(ast, scope);
 
             let thisDeps = [];
@@ -423,7 +424,7 @@ export class ClassIR {
     analyzeHandlerDep() {
         for(let [fname, fvalue] of Object.entries(this.handlers)) {
             let ast = parseFunction(fvalue.src);
-            let scope = ['undefined', 'NaN', 'console', 'this', ...fvalue.params.map(x => x.name)];
+            let scope = ['undefined', 'NaN', 'console', 'this', 'globalThis', ...fvalue.params.map(x => x.name)];
             let deps = analyzeDep(ast, scope);
 
             let thisDeps = [];
@@ -437,6 +438,48 @@ export class ClassIR {
             fvalue.thisDeps = thisDeps;
         }
 
+    }
+
+
+    analyzeExpressionDep() {
+        let scope = ['undefined', 'NaN', 'console', 'this', 'globalThis'];
+        for(let [pname, pvalue] of Object.entries(this.props)) {
+            if(pvalue.type === 'Expression') {
+                let expr = pvalue.value.trim();
+                let ast = parseExpression(expr);
+                
+                let deps = analyzeDep(ast, scope);
+                let thisDeps = [];
+                for(let dep of deps) {
+                    if(this.has(dep)) {
+                        thisDeps.push(dep);
+                    } else {
+                        console.log(`Warning: Referencing ${dep} (property ${pname}: ${expr}) that is not in the same file. (${this.filename})`);
+                    }
+                }
+                pvalue.thisDeps = thisDeps;
+            
+            }
+        }
+
+        for(let [aname, avalue] of Object.entries(this.attributes)) {
+            
+            if(avalue.type === 'Expression') {
+                let expr = avalue.value.trim();
+                let ast = parseExpression(expr);
+                
+                let deps = analyzeDep(ast, scope);
+                let thisDeps = [];
+                for(let dep of deps) {
+                    if(this.has(dep)) {
+                        thisDeps.push(dep);
+                    } else {
+                        console.log(`Warning: Referencing ${dep} (${aname}: ${expr}) that is not in the same file. (${this.filename})`);
+                    }
+                }
+                avalue.thisDeps = thisDeps;
+            }
+        }
     }
 
     hasProperty(name) {

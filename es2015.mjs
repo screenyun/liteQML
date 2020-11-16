@@ -30,10 +30,12 @@ export function generate(classIR, indent, generated) {
 
 
         let propDecl = '';
-        let propInit = '';
+        let propInit = '', postPropInit = '';
         for(const [pname, pvalue] of Object.entries(classIR.props)) {
             propDecl +=`${' '.repeat(indent+8)}this.addProperty('${pname}');\n`;
-            propInit += generatePropInit(pname, pvalue, indent+8);
+            const [propInit_, postPropInit_] = generatePropInit(pname, pvalue, indent+8);
+            propInit += propInit_;
+            postPropInit += postPropInit_;
         }
 
         let signalDecl = ''
@@ -46,8 +48,12 @@ export function generate(classIR, indent, generated) {
 
 
         let attrInit = '';
+        let postAttrInit = '';
         for(const [aname, avalue] of Object.entries(classIR.attributes)) {
-            attrInit += generateAttribInit(aname, avalue, indent+8);
+            const [attrInit_, postAttrInit_] = generateAttribInit(aname, avalue, indent+8);
+            attrInit += attrInit_;
+            postAttrInit += postAttrInit_;
+
         }
 
         let finalize = '';
@@ -67,7 +73,7 @@ ${indentStr}    constructor(parent, params) {
 ${indentStr}        params = params? params: {};
 ${attrInit}
 ${indentStr}        super(parent, params);
-${propDecl}${signalDecl}${handlersConnections}${propInit}${childrenDecl}${childrenInit}${finalize}
+${propDecl}${signalDecl}${postAttrInit}${postPropInit}${handlersConnections}${propInit}${childrenDecl}${childrenInit}${finalize}
 ${indentStr}    }
 ${funcsDecl}${handlersDecl}
 ${indentStr}}
@@ -83,6 +89,7 @@ ${indentStr}}
 
 function generatePropInit(pname, pvalue, indent) {
     let initVal;
+    let postAssign = '';
     switch(pvalue.type) {
         case 'bool':
             initVal = pvalue.value? `${pvalue.value}`: 'false';
@@ -95,25 +102,42 @@ function generatePropInit(pname, pvalue, indent) {
             initVal = pvalue.value? `'${pvalue.value}'`: `''`;
             break;
         case 'Expression':
-            throw new Error('Not implemented');
+            let pdeps = '';
+            for(let dep of pvalue.thisDeps) {
+                pdeps += `let ${dep}=this.${dep};\n`;
+                postAssign += `${' '.repeat(indent)}chainConnect(this, '${dep}', () => {
+${' '.repeat(indent+4)}this._${pname}Dirty = true; this.${pname}Changed.emit(); })\n`;
+            }
+            initVal = `() => {${pdeps} return ${pvalue.value}};`
+            console.log('Warning: Expression binding is not fully support yet')
+            break;
         case 'Object':
             break;
     }
-    return `${' '.repeat(indent)}this.${pname} = params && params.${pname}? params.${pname}: ${initVal};\n`;
+    return [`${' '.repeat(indent)}this.${pname} = params && params.${pname}? params.${pname}: ${initVal};\n`, postAssign];
 }
 
 function generateAttribInit(aname, avalue, indent) {
     let initVal;
+    let postAssign = '';
     switch(avalue.type) {
         case 'Literal':
             initVal = (typeof avalue.value === 'string')?`'${avalue.value}'`: `${avalue.value}`;
             break;
         case 'Expression':
-            throw new Error('Not implemented');
+            let adeps = '';
+            for(let dep of avalue.thisDeps) {
+                adeps += `let ${dep}=this.${dep};\n`;
+                postAssign += `${' '.repeat(indent)}chainConnect(this, '${dep}', () => {
+${' '.repeat(indent+4)}this._${aname}Dirty = true; this.${aname}Changed.emit(); })\n`;
+            }
+            initVal = `() => {${adeps} return ${avalue.value}};`
+            console.log('Warning: Expression binding is not fully support yet')
+            break;
         case 'Object':
             break;
     }
-    return `${' '.repeat(indent)}params.${aname} = ${initVal};\n`;
+    return [`${' '.repeat(indent)}params.${aname} = ${initVal};\n`, postAssign];
 }
 
 function generateFunctions(funcs, indent) {

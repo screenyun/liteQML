@@ -29,6 +29,42 @@ async function polyfill() {
     if(!process.argv && 'scriptArgs' in globalThis)
         process.argv = ['qjs', ...scriptArgs];
 }
+function chainConnect(target, memberNotation, callback) {
+    let dotPos = memberNotation.indexOf('.');
+    if(dotPos >= 0) {
+        let member = memberNotation.substr(0, dotPos);
+        if(target.hasProperty(member)) {
+            let subNotation = memberNotation.slice(dotPos+1);
+            let childDispose = chainConnect(target[`${member}`], subNotation, callback);
+
+            let cbk = () => {
+                // chain dispose
+                childDispose();
+
+                // reconnect
+                childDispose = chainConnect(target[`${member}`], subNotation);
+
+                // re-eval in this level
+                callback();
+
+            };
+
+            let dispose = () => {
+                target[`${member}Changed`].disconnect(cbk);
+                childDispose();
+            };
+            target[`${member}Changed`].connect(cbk);
+            return dispose;
+        }
+    } else {
+        let member = memberNotation;
+        if(target.hasProperty(member)) {
+            target[`${member}Changed`].connect(callback);
+            return () =>
+                target[`${member}Changed`].disconnect(callback);
+        }
+    }
+}
 class EventEmitter {
     constructor() {
         this.handlers = [];
@@ -379,13 +415,17 @@ class App extends Item {
             constructor(parent, params) {
                 params = params? params: {};
                 params.x = 100;
-                params.y = 100;
+                params.y = () => {let x=this.x;
+ return 100+x
+};;
                 params.width = 100;
                 params.height = 100;
                 params.color = 'black';
                 params.radius = 10;
 
                 super(parent, params);
+                chainConnect(this, 'x', () => {
+                    this._yDirty = true; this.yChanged.emit(); })
 
                 class App_Rectangle_0_Text_0 extends Text {
                     constructor(parent, params) {
@@ -414,8 +454,8 @@ class App extends Item {
                     onClicked() { 
 
 {
-                console.log('耖')
-                this.parent.color = "red"
+                
+                this.parent.x+=10
             }
                     }
 

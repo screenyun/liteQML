@@ -1,5 +1,6 @@
 import * as generator from './generator.mjs';
 import {generate} from './es2015.mjs';
+import {chainConnect} from './qmlcore.mjs'
 import {dirname, polyfill, writeFile} from './utils.mjs';
 
 function run() {
@@ -19,6 +20,7 @@ usage: ${process.argv[0]} ${process.argv[1]} <infile> <outfile>
     const [code, dep] = generate(ir);
     let sourceCode = `
 ${polyfill}
+${chainConnect}
 ${dep}
 ${code}
 polyfill().then(() => {
@@ -32,5 +34,4 @@ polyfill().then(() => {
 //globalThis.fs = fs;
 polyfill().then(run).catch((err) => {
     console.log(err)
-    console.log(err.stack)
 });
