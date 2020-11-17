@@ -9,6 +9,7 @@ import {Getopt} from './getopt.mjs'
 function run() {
     let opt = new Getopt([
         ['', 'no-cache'],
+        ['', 'env=ARG'],
         ['o', 'output-file=ARG'],
         ['h', 'help', 'help me']
     ]);
@@ -18,6 +19,7 @@ Usage:
 
 Options:
     --no-cache          Force reparse
+    --env               Set environment(browser|none)
 
     -o, --output-file   Output file
     -h, --help          help
@@ -28,7 +30,6 @@ Options:
     let inputFile = '';
 
     if(!opt.argv.length) {
-        console.log(JSON.stringify(opt.options))
         opt.showHelp();
         return;
     }
@@ -40,11 +41,17 @@ Options:
         outFile = opt.options.o;
     }
 
+    let env = [];
+    if(opt.options.env === 'browser')
+        env = ['console', 'window', 'setTimeout', 'clearTimeout'];
+    else
+        env = ['console', 'setTimeout', 'clearTimeout'];
+
     let path = dirname(inputFile);
     let ir = new IR.ClassIR({
         scriptPath: path,
         noCache: opt.options['no-cache'],
-        env: ['console', 'window', 'setTimeout', 'clearTimeout']
+        env: env
     });
 
     ir.addImportPath('imports');
