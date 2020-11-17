@@ -60,6 +60,7 @@ export class CoreObject {
     }
 
     appendChild(child) {
+        child.parent = this;
         this.children.push(child);
     }
 
