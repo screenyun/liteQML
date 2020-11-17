@@ -92,6 +92,7 @@ class EventEmitter {
     }
 
     appendChild(child) {
+        child.parent = this;
         this.children.push(child);
     }
 

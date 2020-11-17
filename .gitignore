@@ -1,3 +1,4 @@
 liteqml
 liteqml.c
 .vscode
+*.qml.json

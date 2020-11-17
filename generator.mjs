@@ -1,16 +1,10 @@
-import * as parser from './parser.mjs';
+import {parse, parseFunction, parseExpression} from './parser.mjs';
 import * as qmlcore from './qmlcore.mjs';
-import {readAllContent, compareMTime, writeFile, getClasses, getMethods, fileExist, simplify_path, dirname} from './utils.mjs';
-
-function warning(msg) {
-//    console.log('yoyo')
-//    std.err.puts(msg);
-}
-
+import {readAllContent, fileExist, compareMTime, simplify_path, dirname, writeFile} from './utils.mjs';
 
 export function parseFile(filename) {
     let cachedFile = `${filename}.json`;
-
+  
     let content = readAllContent(`${filename}.json`);
     let ast;
     let fromCache = false;
@@ -20,21 +14,19 @@ export function parseFile(filename) {
     } else {
         content = readAllContent(filename);
         if(content)
-            ast = parser.parse(content);
+            ast = parse(content);
     }
     // cache
     if(ast && !fromCache) {
         writeFile(`${filename}.json`, JSON.stringify(ast));
     }
     return ast;
-}
+  }
 
-export function parseFunction(code) {
-    return parser.parse(code, {startRule:'FunctionBody'});
-}
-
-export function parseExpression(code) {
-    return parser.parse(code, {startRule:'Expression'});
+  
+function warning(msg) {
+//    console.log('yoyo')
+//    std.err.puts(msg);
 }
 
 function appendSet(set, list) {
@@ -514,9 +506,7 @@ export class ClassIR {
     load(filename) {
         if(fileExist(filename)) {
             this.filename = filename;
-            let content = readAllContent(filename);
-
-            let ast = parser.parse(content);
+            let ast = parseFile(filename);
 
             filename = filename.substring(filename.lastIndexOf('/')+1, filename.lastIndexOf('.qml'));
 

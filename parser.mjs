@@ -14604,3 +14604,11 @@ function peg$parse(input, options) {
 
 export let SyntaxError = peg$SyntaxError;
 export let parse = peg$parse;
+
+export function parseFunction(code) {
+  return parse(code, {startRule:'FunctionBody'});
+}
+
+export function parseExpression(code) {
+  return parse(code, {startRule:'Expression'});
+}
