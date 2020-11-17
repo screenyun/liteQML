@@ -239,6 +239,9 @@ export class ClassIR {
         this.silent = options.silent
         
         this.noCache = options.noCache;
+
+        options.env = options.env? options.env: [];
+        this.env = [...new Set(['undefined', 'NaN', 'console', 'this', 'globalThis', ...options.env])];
     }
 
     addImportPath(path) {
@@ -283,7 +286,12 @@ export class ClassIR {
             if(!(resolved in this.consumedType)) {
                 let resolvedDir = dirname(resolved);
                 
-                let parent = new ClassIR({scriptPath: resolvedDir, consumedType: this.consumedType, noCache: this.noCache});
+                let parent = new ClassIR({
+                    scriptPath: resolvedDir,
+                    consumedType: this.consumedType,
+                    noCache: this.noCache,
+                    env: this.env
+                });
                 // copy importPath
                 for(let path of this.importSolver.additionalPath())
                     parent.addImportPath(path)
@@ -398,7 +406,12 @@ export class ClassIR {
         for(let child of children) {
 
             // create a sandbox for children
-            let childIR = new ClassIR({scriptPath: '', consumedType: this.consumedType, noCache: this.noCache, silent: true})
+            let childIR = new ClassIR({scriptPath: '',
+                consumedType: this.consumedType,
+                noCache: this.noCache,
+                silent: true,
+                env: this.env
+            });
             // share import solver
             childIR.importSolver = this.importSolver;
             childIR.filename = this.filename;
@@ -410,7 +423,7 @@ export class ClassIR {
     analyzeFunctionDep() {
         for(let [fname, fvalue] of Object.entries(this.funcs)) {
             let ast = parseFunction(fvalue.src);
-            let scope = ['undefined', 'NaN', 'console', 'this', 'globalThis', ...fvalue.params.map(x => x.name)];
+            let scope = [...this.env, ...fvalue.params.map(x => x.name)];
             let deps = analyzeDep(ast, scope);
 
             let thisDeps = [];
@@ -429,7 +442,7 @@ export class ClassIR {
     analyzeHandlerDep() {
         for(let [fname, fvalue] of Object.entries(this.handlers)) {
             let ast = parseFunction(fvalue.src);
-            let scope = ['undefined', 'NaN', 'console', 'this', 'globalThis', ...fvalue.params.map(x => x.name)];
+            let scope = [...this.env, ...fvalue.params.map(x => x.name)];
             let deps = analyzeDep(ast, scope);
 
             let thisDeps = [];
@@ -447,7 +460,7 @@ export class ClassIR {
 
 
     analyzeExpressionDep() {
-        let scope = ['undefined', 'NaN', 'console', 'this', 'globalThis'];
+        let scope = this.env;
         for(let [pname, pvalue] of Object.entries(this.props)) {
             if(pvalue.type === 'Expression') {
                 let expr = pvalue.value.trim();

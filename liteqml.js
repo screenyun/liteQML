@@ -41,7 +41,11 @@ Options:
     }
 
     let path = dirname(inputFile);
-    let ir = new IR.ClassIR({scriptPath: path, noCache: opt.options['no-cache']});
+    let ir = new IR.ClassIR({
+        scriptPath: path,
+        noCache: opt.options['no-cache'],
+        env: ['console', 'window', 'setTimeout', 'clearTimeout']
+    });
 
     ir.addImportPath('imports');
     ir.load(inputFile);
