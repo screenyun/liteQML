@@ -1,4 +1,4 @@
-import {simplify_path} from './utils.mjs'
+import {basename} from './utils.mjs'
 
 let __matches,
     __slice = [].slice;
@@ -28,7 +28,7 @@ export class Getopt {
             return process.exit(1);
         };
         if (process.argv[1]) {
-            this.help = "Usage:\n  node " + (simplify_path(process.argv[1])) + " [OPTION]\n\nOptions:\n[[OPTIONS]]";
+            this.help = "Usage:\n  "+basename(process.argv[0])+" " + (basename(process.argv[1])) + " [OPTION]\n\nOptions:\n[[OPTIONS]]";
         } else {
             this.help = "[[OPTIONS]]";
         }

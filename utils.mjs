@@ -16,6 +16,10 @@ export function readAllContent(filename) {
     }
 }
 
+export function basename(path) {
+    return path.split(/[\\/]/).pop();
+}
+
 export function related_path(pathA, pathB) {
     pathA = pathA.split('/')
     pathB = pathB.split('/')
@@ -96,7 +100,6 @@ export async function polyfill() {
     if(!('info' in console))
         console.info = console.log
 }
-
 
 export function polyfill2() {
     if(!('setTimeout' in globalThis)) {

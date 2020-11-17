@@ -1,7 +1,7 @@
 import * as IR from './ir.mjs';
 import {generate} from './es2015.mjs';
 import {chainConnect} from './qmlcore.mjs'
-import {dirname, polyfill, writeFile} from './utils.mjs';
+import {dirname, polyfill, writeFile, basename} from './utils.mjs';
 import {Getopt} from './getopt.mjs'
 
 
@@ -14,7 +14,7 @@ function run() {
     ]);
     opt.bindHelp(`liteqml 2020-11-17
 Usage:
-    ${process.argv[0]} liteqml.js [OPTIONS] entry.qml
+    ${basename(process.argv[0])} liteqml.js [OPTIONS] entry.qml
 
 Options:
     --no-cache          Force reparse
