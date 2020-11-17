@@ -1,4 +1,4 @@
-import {JSClassIR, ClassIR} from './generator.mjs'
+import {JSClassIR, ClassIR} from './ir.mjs'
 
 export function generate(classIR, indent, generated) {
     generated = generated? generated: new Set();

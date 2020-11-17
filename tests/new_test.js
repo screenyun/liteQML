@@ -1,4 +1,4 @@
-import * as generator from '../generator.mjs';
+import * as IR from '../ir.mjs';
 import { related_path } from '../utils.mjs';
 import {dirname, polyfill} from '../utils.mjs';
 
@@ -22,7 +22,7 @@ function assert(actual, expected, message) {
 function run() {
     try {
         let path = dirname(process.argv[1]);
-        let ir = new generator.ClassIR({scriptPath: path});
+        let ir = new IR.ClassIR({scriptPath: path});
 
         path = related_path(path, process.cwd())
         

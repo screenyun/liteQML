@@ -1,4 +1,4 @@
-import * as generator from './generator.mjs';
+import * as IR from './ir.mjs';
 import {generate} from './es2015.mjs';
 import {chainConnect} from './qmlcore.mjs'
 import {dirname, polyfill, writeFile} from './utils.mjs';
@@ -11,7 +11,7 @@ usage: ${process.argv[0]} ${process.argv[1]} <infile> <outfile>
         return;
     }
     let path = dirname(process.argv[2]);
-    let ir = new generator.ClassIR({scriptPath: path});
+    let ir = new IR.ClassIR({scriptPath: path});
 
 
 
