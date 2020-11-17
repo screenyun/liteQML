@@ -2,21 +2,40 @@ import * as IR from './ir.mjs';
 import {generate} from './es2015.mjs';
 import {chainConnect} from './qmlcore.mjs'
 import {dirname, polyfill, writeFile} from './utils.mjs';
+import {Getopt} from './getopt.mjs'
+
+
 
 function run() {
-    if(process.argv.length < 4) {
-        console.log(`liteQML version 2020-11-16
-usage: ${process.argv[0]} ${process.argv[1]} <infile> <outfile>
-`)
+    let opt = new Getopt([
+        ['o', 'output-file=ARG'],
+        ['h', 'help', ['help me']]
+    ]);
+
+    opt.parseSystem();
+
+    let inputFile = '';
+
+    if(!opt.argv.length) {
+        console.log(opt.options)
+        opt.showHelp();
         return;
     }
-    let path = dirname(process.argv[2]);
+
+    inputFile = opt.argv[0];
+
+    let outFile = inputFile.substr(0, inputFile.length-3)+'js';
+    if('o' in opt.options) {
+        outFile = opt.options.o;
+    }
+
+    let path = dirname(inputFile);
     let ir = new IR.ClassIR({scriptPath: path});
 
 
 
     ir.addImportPath('imports');
-    ir.load(process.argv[2]);
+    ir.load(inputFile);
     const [code, dep] = generate(ir);
     let sourceCode = `
 ${polyfill}
@@ -28,10 +47,11 @@ polyfill().then(() => {
     window.qml.rootObject = new ${ir.objName}();
 });
 `
-    writeFile(process.argv[3], sourceCode);
+    console.info(`Outputing to ${outFile}`);
+    writeFile(outFile, sourceCode);
 }
 
 //globalThis.fs = fs;
 polyfill().then(run).catch((err) => {
-    console.log(err)
+    console.log(err+err.stack)
 });

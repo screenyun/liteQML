@@ -28,6 +28,9 @@ async function polyfill() {
 
     if(!process.argv && 'scriptArgs' in globalThis)
         process.argv = ['qjs', ...scriptArgs];
+
+    if(!('info' in console))
+        console.info = console.log
 }
 function chainConnect(target, memberNotation, callback) {
     let dotPos = memberNotation.indexOf('.');
