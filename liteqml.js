@@ -8,16 +8,27 @@ import {Getopt} from './getopt.mjs'
 
 function run() {
     let opt = new Getopt([
+        ['', 'no-cache'],
         ['o', 'output-file=ARG'],
-        ['h', 'help', ['help me']]
+        ['h', 'help', 'help me']
     ]);
+    opt.bindHelp(`liteqml 2020-11-17
+Usage:
+    ${process.argv[0]} liteqml.js [OPTIONS] entry.qml
+
+Options:
+    --no-cache          Force reparse
+
+    -o, --output-file   Output file
+    -h, --help          help
+`)
 
     opt.parseSystem();
 
     let inputFile = '';
 
     if(!opt.argv.length) {
-        console.log(opt.options)
+        console.log(JSON.stringify(opt.options))
         opt.showHelp();
         return;
     }
@@ -30,9 +41,7 @@ function run() {
     }
 
     let path = dirname(inputFile);
-    let ir = new IR.ClassIR({scriptPath: path});
-
-
+    let ir = new IR.ClassIR({scriptPath: path, noCache: opt.options['no-cache']});
 
     ir.addImportPath('imports');
     ir.load(inputFile);

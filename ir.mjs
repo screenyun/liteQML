@@ -2,17 +2,20 @@ import {parse, parseFunction, parseExpression} from './parser.mjs';
 import * as qmlcore from './qmlcore.mjs';
 import {readAllContent, fileExist, compareMTime, simplify_path, dirname, writeFile} from './utils.mjs';
 
-export function parseFile(filename) {
-    let cachedFile = `${filename}.json`;
+export function parseFile(filename, noCache) {
+    let cachedFilename = `${filename}.json`;
   
-    let content = readAllContent(`${filename}.json`);
+    if(!fileExist(filename))
+        throw new Error(`${filename} does not exist`);
+
     let ast;
     let fromCache = false;
-    if(content && compareMTime(filename, cachedFile)) {
+    if(!noCache && fileExist(cachedFilename) && compareMTime(filename, cachedFilename)) {
+        let content = readAllContent(cachedFilename);
         fromCache = true;
         ast = JSON.parse(content);
     } else {
-        content = readAllContent(filename);
+        let content = readAllContent(filename);
         if(content)
             ast = parse(content);
     }
@@ -234,6 +237,8 @@ export class ClassIR {
         this.parent = null;
         this.filename = '';
         this.silent = options.silent
+        
+        this.noCache = options.noCache;
     }
 
     addImportPath(path) {
@@ -275,7 +280,7 @@ export class ClassIR {
             if(!(resolved in this.consumedType)) {
                 let resolvedDir = dirname(resolved);
                 
-                let parent = new ClassIR({scriptPath: resolvedDir, consumedType: this.consumedType});
+                let parent = new ClassIR({scriptPath: resolvedDir, consumedType: this.consumedType, noCache: this.noCache});
                 // copy importPath
                 for(let path of this.importSolver.additionalPath())
                     parent.addImportPath(path)
@@ -394,7 +399,7 @@ export class ClassIR {
         for(let child of children) {
 
             // create a sandbox for children
-            let childIR = new ClassIR({scriptPath: '', consumedType: this.consumedType, silent: true})
+            let childIR = new ClassIR({scriptPath: '', consumedType: this.consumedType, noCache: this.noCache, silent: true})
             // share import solver
             childIR.importSolver = this.importSolver;
             childIR.filename = this.filename;
@@ -506,7 +511,7 @@ export class ClassIR {
     load(filename) {
         if(fileExist(filename)) {
             this.filename = filename;
-            let ast = parseFile(filename);
+            let ast = parseFile(filename, this.noCache);
 
             filename = filename.substring(filename.lastIndexOf('/')+1, filename.lastIndexOf('.qml'));
 
