@@ -272,6 +272,9 @@ export class ClassIR {
     consumeObjectAST(ast, objName, scope) {
         scope = scope? scope: new Set();
         this.objName = objName;
+
+        if(!this.silent)
+            console.log(`Processing ${this.filename} for ${objName}`)
         
         if(ast.type) {
             let resolved = this.resolveType(ast.type);
@@ -288,8 +291,6 @@ export class ClassIR {
                 parent.load(resolved);
                 this.consumedType[resolved] = parent;
             }
-            if(!this.silent)
-                console.log(`Processing ${this.filename} for ${objName}`)
             this.parent = this.consumedType[resolved];
 
             if(ast.functions) {
@@ -319,8 +320,6 @@ export class ClassIR {
             this.analyzeFunctionDep();
             this.analyzeHandlerDep();
             this.analyzeExpressionDep();
-
-            
         } else
             throw new Error(`Invalid AST (${this.filename})`);
     }
