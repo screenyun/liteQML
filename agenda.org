@@ -1,4 +1,4 @@
-* Schedule [52%]
+* Schedule [64%]
 ** DONE EventEmitter
 ** DONE CoreObject [2/2]
    - [X] signal
@@ -14,6 +14,11 @@
    - [X] Search import path
    - [X] Import module 'As' something
 ** DONE Separate Consume and Generate
+** DONE Dep Tracking Through Grammar [2/2]
+   - [X] Expression
+   - [X] FunctionBody
+** DONE Compile to binary executable
+   There are some issuses. String(function) will no longer be source code.
 ** TODO QML id Scoping
 ** TODO Drawing Module [1/1]
    - [X] concrete.js for browser
@@ -22,13 +27,11 @@
 ** TODO Process argopt [1/2]
    - [X] Basic input output
    - [ ] ES Target Selection
-** TODO Dep Tracking Through Grammar [1/2]
-   - [X] Expression
-   - [ ] FunctionBody
 ** TODO Add Test for Dep Tracking
 ** TODO ES6 PEG Grammar [1/2]
    - [ ] Template Literal
    - [ ] Arrow Function
    - [X] Analyze identifier dep
-** TODO Compile to binary executable
+   - [ ] Line number
 ** TODO Language Server Protocol
+   This should be postpone until we are able to track line number
