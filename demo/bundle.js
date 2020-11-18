@@ -165,71 +165,66 @@ class Item extends CoreObject {
 
     }
     draw(layer) {
-
-let scene = layer.scene,
-        ctx = scene.context;
-
+    {
+        let scene=layer.scene, ctx=scene.context
         this.beginNode(layer);
-        
         this.drawChildren(layer);
         this.endNode(layer);
+
+    }
     }
     beginNode(layer) {
-        let x=this.x;
-        let width=this.width;
-        let y=this.y;
-        let height=this.height;
-        let rotation=this.rotation;
-        let clip=this.clip;
-
-let ctxScene = layer.scene.context;
-        let ctxHit = layer.hit.context;
-
+    {
+        let ctxScene=layer.scene.context
+        let ctxHit=layer.hit.context
         ctxScene.save();
         ctxHit.save();
-        ctxScene.translate(x+width/2, y+height/2);
-        ctxScene.rotate(rotation * 3.14159 / 180);
-        ctxHit.translate(x+width/2, y+height/2);
-        ctxHit.rotate(rotation * 3.14159 / 180);
-
-        if(clip) {
+        ctxScene.translate(this.x + this.width / 2, this.y + this.height / 2);
+        ctxScene.rotate(this.rotation * 3.14159 / 180);
+        ctxHit.translate(this.x + this.width / 2, this.y + this.height / 2);
+        ctxHit.rotate(this.rotation * 3.14159 / 180);
+        if (this.clip) {
             this.outline(ctxScene);
             ctxScene.clip();
-
             this.outline(ctxHit);
             ctxHit.clip();
-        }
+
+        } 
+
+    }
     }
     endNode(layer) {
-
-let ctxScene = layer.scene.context;
-        let ctxHit = layer.hit.context;
-
+    {
+        let ctxScene=layer.scene.context
+        let ctxHit=layer.hit.context
         ctxScene.restore();
         ctxHit.restore();
+
+    }
     }
     outline(ctx) {
-        let width=this.width;
-        let height=this.height;
+    {
+        ctx.beginPath();
+        ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
 
-ctx.beginPath();
-        ctx.rect(-width/2, -height/2, width, height);
+    }
     }
     drawChildren(layer) {
-
-let ctxScene = layer.scene.context;
-        let ctxHit = layer.hit.context;
+    {
+        let ctxScene=layer.scene.context
+        let ctxHit=layer.hit.context
         ctxScene.save();
         ctxHit.save();
-        ctxScene.translate(-this.width/2, -this.height/2);
-        ctxHit.translate(-this.width/2, -this.height/2);
-        for(let i=0; i<this.children.length; i++) {
-            if(this.children[i] instanceof Item) {
-                this.children[i].draw(layer);
-            }
-        }
+        ctxScene.translate(-this.width / 2, -this.height / 2);
+        ctxHit.translate(-this.width / 2, -this.height / 2);
+        for(let i=0; i < this.children.length; i++)
+            if (this.children[i] instanceof Item) this.children[i].draw(layer); 
+
+
         ctxScene.restore();
         ctxHit.restore();
+
+    }
     }
 
 }
@@ -247,40 +242,36 @@ class Rectangle extends Item {
 
     }
     draw(layer) {
-        let width=this.width;
-        let height=this.height;
-        let radius=this.radius;
-        let color=this.color;
-
-let scene = layer.scene,
-        ctx = scene.context;
+    {
+        let scene=layer.scene, ctx=scene.context
         this.beginNode(layer);
-        this.roundRect(ctx, -width/2, -height/2, width, height, radius);
-        ctx.fillStyle = color;
+        this.roundRect(ctx, -this.width / 2, -this.height / 2, this.width, this.height, this.radius);
+        ctx.fillStyle = this.color;
         ctx.fill();
-        
         this.drawChildren(layer);
         this.endNode(layer);
+
+    }
     }
     outline(ctx) {
-        let width=this.width;
-        let height=this.height;
-        let radius=this.radius;
+    this.roundRect(ctx, -this.width / 2, -this.height / 2, this.width, this.height, this.radius);
 
-this.roundRect(ctx, -width/2, -height/2, width, height, radius);
+
     }
     roundRect(ctx,x,y,w,h,r) {
-
-if (w < 2 * r) r = w / 2;
-        if (h < 2 * r) r = h / 2;
+    {
+        if (w < 2 * r) r = w / 2; 
+        if (h < 2 * r) r = h / 2; 
         ctx.beginPath();
-        ctx.moveTo(x+r, y);
-        ctx.arcTo(x+w, y,   x+w, y+h, r);
-        ctx.arcTo(x+w, y+h, x,   y+h, r);
-        ctx.arcTo(x,   y+h, x,   y,   r);
-        ctx.arcTo(x,   y,   x+w, y,   r);
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
         ctx.closePath();
-        return ctx;
+;
+
+    }
     }
 
 }
@@ -298,23 +289,18 @@ class Text extends Item {
 
     }
     draw(layer) {
-        let text=this.text;
-        let color=this.color;
-
-let scene = layer.scene,
-        ctx = scene.context;
-
-        let txt = ctx.measureText(text);
-        this.width = txt.width
-        this.height = txt.actualBoundingBoxAscent + txt.actualBoundingBoxDescent
-
+    {
+        let scene=layer.scene, ctx=scene.context
+        let txt=ctx.measureText(this.text)
+        this.width = txt.width;
+        this.height = txt.actualBoundingBoxAscent + txt.actualBoundingBoxDescent;
         this.beginNode(layer);
-
-        ctx.fillStyle = color;
-        ctx.fillText(text, -this.width/2, this.height/2);
-        
+        ctx.fillStyle = this.color;
+        ctx.fillText(this.text, -this.width / 2, this.height / 2);
         this.drawChildren(layer);
         this.endNode(layer);
+
+    }
     }
 
 }
@@ -331,42 +317,41 @@ class MouseArea extends Item {
 
     }
     draw(layer) {
-        let width=this.width;
-        let height=this.height;
-
-let hit = layer.hit,
-        ctx = hit.context;
-
+    {
+        let hit=layer.hit, ctx=hit.context
         this.beginNode(layer);
         ctx.beginPath();
-        
-        ctx.rect(-width/2, -height/2, width, height);
+        ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
         ctx.fillStyle = hit.getColorFromIndex(this.key);
         ctx.fill();
-        
         this.drawChildren(layer);
         this.endNode(layer);
+
+    }
     }
     mouseMoved() {
+    this.positionChanged.emit();
 
-this.positionChanged.emit();
+
     }
     mouseClicked() {
+    this.clicked.emit();
 
-this.clicked.emit();
+
     }
     onCompleted() { 
+    {
+        if (window.qml.mouseArea === undefined) {
+            window.qml.mouseArea = 0;
+            window.qml.mouseAreas = {};
 
-{
-        
-        if(window.qml.mouseArea===undefined) {
-            window.qml.mouseArea = 0
-            window.qml.mouseAreas = {}
-        } else
-            window.qml.mouseArea++
-        this.key = window.qml.mouseArea
+        } else window.qml.mouseArea++;
+        this.key = window.qml.mouseArea;
         window.qml.mouseAreas[this.key] = this;
+
     }
+
+
     }
 
 }
@@ -388,20 +373,19 @@ class Timer extends CoreObject {
 
     }
     onRunningChanged() { 
-        let running=this.running;
-        let interval=this.interval;
+    if (this.running) {
+        let cbk=(function () {
+            this.triggered.emit();
+            if (this.repeat) setTimeout(cbk, this.interval); 
 
-{
-        if(running) {
-            let cbk = function() {
-                this.triggered.emit();
-                if(this.repeat)
-                    setTimeout(cbk, this.interval);
-            }.bind(this);
-            
-            this._t = setTimeout(cbk, interval);
-        }
-    }
+        }).bind(this)
+        this._t = setTimeout(cbk, this.interval);
+
+    } 
+
+
+
+
     }
 
 }
@@ -449,11 +433,13 @@ class Test extends Rectangle {
 
             }
             onClicked() { 
+            {
+                let parent=this.parent
+                parent.x += 10;
 
-{
-            
-            this.parent.x+=10
-        }
+            }
+
+
             }
 
         }
@@ -471,10 +457,11 @@ class Test extends Rectangle {
 
             }
             onTriggered() { 
+            this.parent.rotation += 10;
 
-{
-            this.parent.rotation+=10;
-        }
+
+
+
             }
 
         }
@@ -486,16 +473,17 @@ class Test extends Rectangle {
 
     }
     onXChanged() { 
+    console.log(this.x);
 
-{
-        console.log(this.x)
-    }
+
+
+
     }
     onCompleted() { 
 
-{
-        this.y
-    }
+
+
+
     }
 
 }
@@ -508,7 +496,25 @@ class App extends Item {
 
         super(parent, params);
 
-        class App_Test_0 extends Test {
+        class App_Rectangle_0 extends Rectangle {
+            constructor(parent, params) {
+                params = params? params: {};
+                params.x = 50;
+                params.y = 50;
+                params.width = 100;
+                params.height = 100;
+                params.color = 'purple';
+                params.radius = 10;
+                params.rotation = 30;
+
+                super(parent, params);
+
+            }
+
+        }
+    
+
+        class App_Test_1 extends Test {
             constructor(parent, params) {
                 params = params? params: {};
 
@@ -518,7 +524,8 @@ class App extends Item {
 
         }
     
-        this.appendChild(new App_Test_0(this));
+        this.appendChild(new App_Rectangle_0(this));
+        this.appendChild(new App_Test_1(this));
 
     }
 
