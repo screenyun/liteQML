@@ -3,16 +3,27 @@ import browser.qmlcore 1.0
 
 Item {
     Rectangle {
-        x: 50
-        y: 50
-        width: 100
-        height: 100
-        color: "purple"
-        radius: 10
-        rotation: 30
+        width: parent.width
+        height: parent.height
+        color: "black"
     }
-    Test {
-        
+
+    Rectangle {
+        x: 100
+        y: 100
+        width: 50
+        height: 50
+        color: "white"
+
+        Timer {
+            repeat: true
+            running: true
+            interval: 100
+            onTriggered: {
+                parent.rotation+=10
+            }
+
+        }
     }
 
 }

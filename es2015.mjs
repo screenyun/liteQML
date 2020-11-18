@@ -252,7 +252,8 @@ function generatePropInit(pname, pvalue, indent) {
         case 'Expression':
             let pdeps = '';
             for(let dep of pvalue.thisDeps) {
-                pdeps += `let ${dep}=this.${dep};\n`;
+                let d = dep.split('.')[0];
+                pdeps += `let ${d}=this.${d};\n`;
                 postAssign += `${' '.repeat(indent)}chainConnect(this, '${dep}', () => {
 ${' '.repeat(indent+4)}this._${pname}Dirty = true; this.${pname}Changed.emit(); })\n`;
             }
@@ -275,7 +276,8 @@ function generateAttribInit(aname, avalue, indent) {
         case 'Expression':
             let adeps = '';
             for(let dep of avalue.thisDeps) {
-                adeps += `let ${dep}=this.${dep};\n`;
+                let d = dep.split('.')[0];
+                adeps += `let ${d}=this.${d};\n`;
                 postAssign += `${' '.repeat(indent)}chainConnect(this, '${dep}', () => {
 ${' '.repeat(indent+4)}this._${aname}Dirty = true; this.${aname}Changed.emit(); })\n`;
             }

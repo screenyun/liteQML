@@ -456,7 +456,7 @@ export class ClassIR {
                 let expr = pvalue.value.trim();
                 let ast = parseExpression(expr);
                 
-                let deps = ast.dep?ast.asp: [];
+                let deps = ast.dep?ast.dep: [];
                 let thisDeps = [];
                 for(let dep of deps) {
                     if(this.has(dep)) {
@@ -475,11 +475,10 @@ export class ClassIR {
             if(avalue.type === 'Expression') {
                 let expr = avalue.value.trim();
                 let ast = parseExpression(expr);
-                
-                let deps = analyzeDep(ast, scope);
+                let deps = ast.dep?ast.dep: [];
                 let thisDeps = [];
                 for(let dep of deps) {
-                    if(this.has(dep)) {
+                    if(this.has(dep.split('.')[0])) {
                         thisDeps.push(dep);
                     } else {
                         console.log(`Warning: Referencing ${dep} (${aname}: ${expr}) that is not in the same file. (${this.filename})`);

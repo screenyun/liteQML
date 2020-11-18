@@ -29,7 +29,7 @@ Rectangle {
         repeat: true
         interval: 100
         onTriggered: {
-            this.parent.rotation+=10;
+            parent.rotation+=10;
         }
     }
 

@@ -35,6 +35,8 @@
             });
             layer = new Concrete.Layer();
             viewport.add(layer);
+            qml.rootObject.width = viewport.width
+            qml.rootObject.height = viewport.height
             render();
 
             function findObjectByKey(key) {
