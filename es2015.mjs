@@ -49,7 +49,7 @@ export function translateCode(ast, scope, indent, thisObj) {
         let alternate = '';
         if(ast.alternate) {
             let ret = translateCode(ast.alternate, scope, indent, thisObj).trim();
-            if(isSymbol(ast.alternate))
+            if(isSymbol(ast.alternate.type))
                 ret = resolveSymbol(ret, scope, thisObj);
             alternate = 'else '+ ret;
         }
@@ -76,7 +76,17 @@ export function translateCode(ast, scope, indent, thisObj) {
     
     } else if(ast.type === 'ObjectExpression') {
         // TODO Finish this
+        console.log('JSON is not fully supported yet');
         return '{}';
+    } else if(ast.type === 'ArrayExpression') {
+        let elements = ast.elements.map(x => {
+            // Indent??
+            let element = translateCode(x, scope, indent+4, thisObj);
+            if(isSymbol(x.type))
+                element = resolveSymbol(element, scope, thisObj);
+            return element;
+        });
+        return `[${elements.join(', ')}]`;
     } else if(ast.type === 'FunctionExpression') {
         let body = translateCode(ast.body, scope, indent, thisObj);
         return `function () ${body.trim()}`;
@@ -89,6 +99,21 @@ export function translateCode(ast, scope, indent, thisObj) {
         let body = ast.body? translateCode(ast.body, childScope, indent+4, thisObj): '';
 
         return `${indentStr}for(${init}; ${test}; ${update})\n${body}`;
+    } else if(ast.type === 'ConditionalExpression') {
+        let test = translateCode(ast.test, scope, indent, thisObj);
+        if(isSymbol(ast.test.type))
+            test = resolveSymbol(test, scope, thisObj);
+        let consequent = translateCode(ast.consequent, scope, indent, thisObj);
+        if(isSymbol(ast.consequent.type))
+            consequent = resolveSymbol(consequent, scope, thisObj);
+        let alternate = '';
+        if(ast.alternate) {
+            let ret = translateCode(ast.alternate, scope, indent, thisObj).trim();
+            if(isSymbol(ast.alternate.type))
+                ret = resolveSymbol(ret, scope, thisObj);
+            alternate = ret;
+        }
+        return `${test}?${consequent.trim()}:${alternate}`
     } else if(ast.type === 'CallExpression') {
         let callee = translateCode(ast.callee, scope, indent, thisObj);
         // parameters
@@ -142,7 +167,7 @@ export function translateCode(ast, scope, indent, thisObj) {
     } else if(ast.type === 'Identifier') {
         return ast.name;
     } else if(ast.type === 'Literal') {
-        return typeof ast.value === 'string'? `'${ast.value}'`: ast.value;
+        return typeof ast.value === 'string'? `'${ast.value}'`: `${ast.value}`;
     }
     return ';';
 }

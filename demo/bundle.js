@@ -277,6 +277,63 @@ class Rectangle extends Item {
 }
     
 
+class MouseArea extends Item {
+    constructor(parent, params) {
+        params = params? params: {};
+
+        super(parent, params);
+        this.addProperty('containsMouse');
+        this.addProperty('mouseX');
+        this.addProperty('mouseY');
+        this.addSignal('positionChanged');
+        this.addSignal('clicked');
+        this.containsMouse = params && params.containsMouse? params.containsMouse: false;
+        this.mouseX = params && params.mouseX? params.mouseX: 0;
+        this.mouseY = params && params.mouseY? params.mouseY: 0;
+        MouseArea.prototype.onCompleted.call(this);
+
+    }
+    draw(layer) {
+    {
+        let hit=layer.hit, ctx=hit.context
+        this.beginNode(layer);
+        ctx.beginPath();
+        ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
+        ctx.fillStyle = hit.getColorFromIndex(this.key);
+        ctx.fill();
+        this.drawChildren(layer);
+        this.endNode(layer);
+
+    }
+    }
+    mouseMoved() {
+    this.positionChanged.emit();
+
+
+    }
+    mouseClicked() {
+    this.clicked.emit();
+
+
+    }
+    onCompleted() { 
+    {
+        if (window.qml.mouseArea === undefined) {
+            window.qml.mouseArea = 0;
+            window.qml.mouseAreas = [this];
+
+        } else window.qml.mouseArea++;
+        this.key = window.qml.mouseArea;
+        window.qml.mouseAreas.push(this);
+
+    }
+
+
+    }
+
+}
+    
+
 class Timer extends CoreObject {
     constructor(parent, params) {
         params = params? params: {};
@@ -348,10 +405,51 @@ class App extends Item {
                 params.width = 50;
                 params.height = 50;
                 params.color = 'white';
+                params.radius = 10;
 
                 super(parent, params);
 
-                class App_Rectangle_1_Timer_0 extends Timer {
+                class App_Rectangle_1_MouseArea_0 extends MouseArea {
+                    constructor(parent, params) {
+                        params = params? params: {};
+                        params.width = () => {let parent=this.parent;
+ return parent.width
+};;
+                        params.height = () => {let parent=this.parent;
+ return parent.height
+};;
+
+                        super(parent, params);
+                        chainConnect(this, 'parent.width', () => {
+                            this._widthDirty = true; this.widthChanged.emit(); })
+                        chainConnect(this, 'parent.height', () => {
+                            this._heightDirty = true; this.heightChanged.emit(); })
+                        this.containsMouseChanged.connect(this.onContainsMouseChanged.bind(this));
+                        this.positionChanged.connect(this.onPositionChanged.bind(this));
+
+                    }
+                    onContainsMouseChanged() { 
+                    this.parent.color = this.containsMouse?'red':'white';
+
+
+
+
+                    }
+                    onPositionChanged() { 
+                    {
+                        let parent=this.parent
+                        parent.x = this.mouseX - parent.width / 2;
+                        parent.y = this.mouseY - parent.height / 2;
+
+                    }
+
+
+                    }
+
+                }
+    
+
+                class App_Rectangle_1_Timer_1 extends Timer {
                     constructor(parent, params) {
                         params = params? params: {};
                         params.repeat = true;
@@ -372,7 +470,8 @@ class App extends Item {
 
                 }
     
-                this.appendChild(new App_Rectangle_1_Timer_0(this));
+                this.appendChild(new App_Rectangle_1_MouseArea_0(this));
+                this.appendChild(new App_Rectangle_1_Timer_1(this));
 
             }
 

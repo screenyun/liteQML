@@ -60,19 +60,40 @@
                 */
             }
 
-            function inputEvent(event, evt) {
+            function getObject(evt) {
                 let rect = concreteContainer.getBoundingClientRect()
                 let x = evt.clientX - rect.left, y = evt.clientY - rect.top,
                 key = viewport.getIntersection(x, y)
                 if(key!=-1) {
                     let obj = findObjectByKey(key);
-                    
-                    obj[event]();
+                    return obj;
                 }
             }
 
-            concreteContainer.onmousemove = (evt) => inputEvent('mouseMoved', evt);
-            concreteContainer.onclick = (evt) => inputEvent('mouseClicked', evt);
+            concreteContainer.onmousemove = (evt) => {
+                let obj = getObject(evt);
+                if(obj) {
+                    let rect = concreteContainer.getBoundingClientRect();
+                    let x = evt.clientX - rect.left, y = evt.clientY - rect.top;
+                    [obj.mouseX, obj.mouseY] = [x, y];
+                
+
+                    obj.containsMouse = true;
+                    obj.mouseMoved();
+                }
+                
+                window.qml.mouseAreas.forEach(x => {
+                    if(x != obj)
+                        x.containsMouse = false;
+                })
+            };
+            concreteContainer.onclick = (evt) => {
+                let obj = getObject(evt);
+                if(obj) {
+                    obj.mouseClicked();
+                }
+                
+            };
         
           </script>
     </body>
