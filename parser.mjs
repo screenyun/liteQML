@@ -170,8 +170,22 @@ function peg$parse(input, options) {
       peg$c14 = "}",
       peg$c15 = peg$literalExpectation("}", false),
       peg$c16 = function(type, appiled, definitions) {
-            
+            let id = null;
+            let i;
+            if(definitions.attributes) {
+              for(i=0; i<definitions.attributes.length; i++) {
+                if(definitions.attributes[i].name==='id') {
+                  id = definitions.attributes[i].value.name;
+                  break;
+                }
+              }
+              if(id) {
+                console.log(i)
+                definitions.attributes.splice(i, 1);
+              }
+            }
             definitions = definitions || {};
+            definitions.id = id;
             definitions.type = type;
             definitions.appliedProperties = appiled? appiled: [];
             return definitions;
