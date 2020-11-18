@@ -36,7 +36,7 @@ function appendSet(set, list) {
     list.forEach(set.add, set);
 }
 
-function analyzeDep(ast, scope) {
+export function analyzeDep(ast, scope) {
     let ret = new Set();
     if(scope == undefined)
         scope = new Set();
@@ -55,6 +55,8 @@ function analyzeDep(ast, scope) {
         appendSet(ret, analyzeDep(ast.consequent, scope));
         if(ast.alternate)
             appendSet(ret, analyzeDep(ast.alternate, scope));
+    } else if(ast.type === 'ReturnStatement') {
+        appendSet(ret, analyzeDep(ast.argument, scope));
     } else if(ast.type === 'ExpressionStatement') {
         appendSet(ret, analyzeDep(ast.expression, scope));
     } else if (ast.type === 'BinaryExpression') {
@@ -83,7 +85,15 @@ function analyzeDep(ast, scope) {
             if(!scope.has(first)) {
                 ret.add(first);
             }
+        } else {
+            // expression
+            appendSet(ret, analyzeDep(ast.object, scope));
         }
+    } else if(ast.type === 'FunctionExpression') {
+        let parentScope = new Set(scope);
+        ast.params.map(x => x.name).forEach(x => parentScope.add(x));
+        appendSet(ret, analyzeDep(ast.body, parentScope));
+        
     } else if(ast.type === 'Identifier') {
         if(!scope.has(ast.name)) {
             ret.add(ast.name);
@@ -424,17 +434,7 @@ export class ClassIR {
         for(let [fname, fvalue] of Object.entries(this.funcs)) {
             let ast = parseFunction(fvalue.src);
             let scope = [...this.env, ...fvalue.params.map(x => x.name)];
-            let deps = analyzeDep(ast, scope);
-
-            let thisDeps = [];
-            for(let dep of deps) {
-                if(this.has(dep)) {
-                    thisDeps.push(dep);
-                } else {
-                    console.log(`Warning: Referencing ${dep} that is not in the same file. (${fname}:${this.filename})`);
-                }
-            }
-            fvalue.thisDeps = thisDeps;
+            fvalue.scope = scope;
         }
 
     }
@@ -443,17 +443,7 @@ export class ClassIR {
         for(let [fname, fvalue] of Object.entries(this.handlers)) {
             let ast = parseFunction(fvalue.src);
             let scope = [...this.env, ...fvalue.params.map(x => x.name)];
-            let deps = analyzeDep(ast, scope);
-
-            let thisDeps = [];
-            for(let dep of deps) {
-                if(this.has(dep)) {
-                    thisDeps.push(dep);
-                } else {
-                    console.log(`Warning: Referencing ${dep} that is not in the same file. (${fname}:${this.filename})`);
-                }
-            }
-            fvalue.thisDeps = thisDeps;
+            fvalue.scope = scope;
         }
 
     }
@@ -466,7 +456,7 @@ export class ClassIR {
                 let expr = pvalue.value.trim();
                 let ast = parseExpression(expr);
                 
-                let deps = analyzeDep(ast, scope);
+                let deps = ast.dep?ast.asp: [];
                 let thisDeps = [];
                 for(let dep of deps) {
                     if(this.has(dep)) {

@@ -19,8 +19,8 @@ Rectangle {
         width: 100
         height: 100
         onClicked: {
-            
-            this.parent.x+=10
+            let parent = this.parent;
+            parent.x+=10
         }
     }
 
@@ -38,6 +38,5 @@ Rectangle {
     }
 
     onCompleted: {
-        this.y
     }
 }
