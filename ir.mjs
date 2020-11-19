@@ -4,7 +4,7 @@ import {readAllContent, fileExist, compareMTime, simplify_path, dirname, writeFi
 
 export function parseFile(filename, noCache) {
     let cachedFilename = `${filename}.json`;
-  
+
     if(!fileExist(filename))
         throw new Error(`${filename} does not exist`);
 
@@ -24,96 +24,6 @@ export function parseFile(filename, noCache) {
         writeFile(`${filename}.json`, JSON.stringify(ast));
     }
     return ast;
-  }
-
-  
-function warning(msg) {
-//    console.log('yoyo')
-//    std.err.puts(msg);
-}
-
-function appendSet(set, list) {
-    list.forEach(set.add, set);
-}
-
-export function analyzeDep(ast, scope) {
-    let ret = new Set();
-    if(scope == undefined)
-        scope = new Set();
-    if(Array.isArray(scope)) {
-        scope = new Set(scope);
-    }
-    if(ast.type === 'BlockStatement') {
-        let parentScope = new Set(scope);
-        ast = ast.body;
-
-        for(let stmt of ast) {
-            appendSet(ret, analyzeDep(stmt, parentScope));
-        }
-    } else if(ast.type === 'IfStatement') {
-        appendSet(ret, analyzeDep(ast.test, scope));
-        appendSet(ret, analyzeDep(ast.consequent, scope));
-        if(ast.alternate)
-            appendSet(ret, analyzeDep(ast.alternate, scope));
-    } else if(ast.type === 'ReturnStatement') {
-        appendSet(ret, analyzeDep(ast.argument, scope));
-    } else if(ast.type === 'ExpressionStatement') {
-        appendSet(ret, analyzeDep(ast.expression, scope));
-    } else if (ast.type === 'BinaryExpression') {
-        appendSet(ret, analyzeDep(ast.left, scope));
-        appendSet(ret, analyzeDep(ast.right, scope));
-    }else if (ast.type === 'CallExpression') {
-        appendSet(ret, analyzeDep(ast.callee, scope));
-        // parameters
-        for(let arg of ast.arguments)
-            appendSet(ret, analyzeDep(arg, scope));
-    }else if (ast.type === 'AssignmentExpression') {
-        //appendSet(ret, analyzeDep(ast.left, scope));
-        appendSet(ret, analyzeDep(ast.right, scope));
-    } else if (ast.type === 'VariableDeclaration') {
-        for(let decl of ast.declarations) {
-            appendSet(ret, analyzeDep(decl, scope));
-        }
-    } else if(ast.type === 'VariableDeclarator') {
-        scope.add(ast.id.name);
-        if(ast.init)
-            appendSet(ret, analyzeDep(ast.init, scope));
-    } else if(ast.type === 'MemberExpression') {
-        // ignore property
-        if(ast.name) {
-            let first = ast.name.split('.')[0];
-            if(!scope.has(first)) {
-                ret.add(first);
-            }
-        } else {
-            // expression
-            appendSet(ret, analyzeDep(ast.object, scope));
-        }
-    } else if(ast.type === 'FunctionExpression') {
-        let parentScope = new Set(scope);
-        ast.params.map(x => x.name).forEach(x => parentScope.add(x));
-        appendSet(ret, analyzeDep(ast.body, parentScope));
-        
-    } else if(ast.type === 'Identifier') {
-        if(!scope.has(ast.name)) {
-            ret.add(ast.name);
-        }
-    }
-
-    return [...ret];
-
-}
-
-function generateDep(dep, summary) {
-    let depCode = '';
-    for(let d of dep) {
-        if(summary.props.indexOf(d)>=0 || summary.signals.indexOf(d)>=0 || summary.functions.indexOf(d)>=0) {
-            depCode += `let ${d}=this.${d};`;
-        } else {
-            warning(`Warning: referencing ${d} from outer scope may lead to runtime error`);
-        }
-    }
-    return depCode;
 }
 
 export class JSClassIR {
@@ -285,7 +195,7 @@ export class ClassIR {
 
         if(ast.objects.length >= 1) {
             let firstObject = ast.objects[0];
-            this.ir = this.consumeObjectAST(firstObject, objName);
+            this.consumeObjectAST(firstObject, objName);
         }
     }
 
