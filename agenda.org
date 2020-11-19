@@ -21,14 +21,10 @@
    There are some issuses. String(function) will no longer be source code.
 ** DONE QML id Scoping
 
-* v0.11 [0%]
+* v0.2 [0%]
+** TODO Support Object Property
 ** TODO Anchor System
-** TODO Improve runtime [0/1]
-   Currently, the runtime has no scheduling system.
-   - [ ] Add event queue
-** TODO Improve Caching System
-   It's unnecessary to 
-
+** TODO Alias Property
 * Backlog [0/3]
 ** TODO Process argopt [1/2]
    - [X] Basic input output
@@ -45,3 +41,12 @@
  
 ** TODO Language Server Protocol
    This should be postpone until we are able to track line number
+** TODO Static id scoping
+   Currently, we always use dynamic id resolving.
+   
+** TODO Improve runtime [0/2]
+   - [ ] Event queue
+   - [ ] Behavior
+** TODO Improve Caching System during Generating Phase
+   It's unnecessary to re-generate all QMLs. 
+** TODO More Strict Type System
