@@ -8,12 +8,20 @@ CoreObject {
     property real rotation
     property bool clip
 
+    property bool visible: true
+
     function draw(layer) {
+        if(visible) {
+            this.drawImpl(layer)
+        }
+    }
+
+    function drawImpl(layer) {
         let scene = layer.scene,
         ctx = scene.context;
 
         this.beginNode(layer);
-        
+
         this.drawChildren(layer);
         this.endNode(layer);
     }

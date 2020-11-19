@@ -3,6 +3,13 @@ import browser.qmlcore 1.0
 
 Rectangle {
     color: "white"
+
+    Image {
+        id: rect
+        width: 100
+        height: 100
+        source: './img.png'
+    }
     Button {
         x: 200
         y: 300
@@ -12,7 +19,7 @@ Rectangle {
         text: "羅凱旋"
 
         onClicked: {
-            rotation+=10;
+            rect.visible = !rect.visible;
         }
     }
 

@@ -6,7 +6,7 @@ Item {
     property real mouseX
     property real mouseY
     
-    function draw(layer) {
+    function drawImpl(layer) {
         let hit = layer.hit,
         ctx = hit.context;
 

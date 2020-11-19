@@ -177,15 +177,22 @@ class Item extends CoreObject {
         this.addProperty('height');
         this.addProperty('rotation');
         this.addProperty('clip');
+        this.addProperty('visible');
         this.x = params && params.x? params.x: 0;
         this.y = params && params.y? params.y: 0;
         this.width = params && params.width? params.width: 0;
         this.height = params && params.height? params.height: 0;
         this.rotation = params && params.rotation? params.rotation: 0;
         this.clip = params && params.clip? params.clip: false;
+        this.visible = params && params.visible? params.visible: true;
 
     }
     draw(layer) {
+    if (this.visible) this.drawImpl(layer); 
+
+
+    }
+    drawImpl(layer) {
     {
         let scene=layer.scene, ctx=scene.context
         this.beginNode(layer);
@@ -262,7 +269,7 @@ class Rectangle extends Item {
         this.color = params && params.color? params.color: undefined;
 
     }
-    draw(layer) {
+    drawImpl(layer) {
     {
         let scene=layer.scene, ctx=scene.context
         this.beginNode(layer);
@@ -299,6 +306,44 @@ class Rectangle extends Item {
 }
     
 
+class Image extends Item {
+    constructor(parent, params) {
+        params = params? params: {};
+
+        super(parent, params);
+        this.addProperty('source');
+        this.sourceChanged.connect(this.onSourceChanged.bind(this));
+        this.source = params && params.source? params.source: '';
+
+    }
+    drawImpl(layer) {
+    {
+        let scene=layer.scene, ctx=scene.context
+        this.beginNode(layer);
+        if (this._imgElement) ctx.drawImage(this._imgElement, (-this.width / 2), (-this.height / 2)); 
+        this.drawChildren(layer);
+        this.endNode(layer);
+
+    }
+    }
+    onSourceChanged() { 
+    {
+        if (!this._imgElement) this._imgElement = document.createElement('img'); 
+        this._imgElement.src = this.source;
+        this._imgElement.onload = (function () {{
+            this.width = this._imgElement.naturalWidth;
+            this.height = this._imgElement.naturalHeight;
+
+        }}).bind(this);
+
+    }
+
+
+    }
+
+}
+    
+
 class Text extends Item {
     constructor(parent, params) {
         params = params? params: {};
@@ -310,7 +355,7 @@ class Text extends Item {
         this.color = params && params.color? params.color: undefined;
 
     }
-    draw(layer) {
+    drawImpl(layer) {
     {
         let scene=layer.scene, ctx=scene.context
         let txt=ctx.measureText(this.text)
@@ -344,7 +389,7 @@ class MouseArea extends Item {
         MouseArea.prototype.onCompleted.call(this);
 
     }
-    draw(layer) {
+    drawImpl(layer) {
     {
         let hit=layer.hit, ctx=hit.context
         this.beginNode(layer);
@@ -392,6 +437,7 @@ class Button extends Rectangle {
     constructor(parent, params) {
         params = params? params: {};
         params.radius = 10;
+        params.clip = true;
 
         super(parent, params);
         this.addProperty('text');
@@ -458,7 +504,22 @@ class App extends Rectangle {
 
         super(parent, params);
 
-        class App_Button_0 extends Button {
+        class App_Image_0 extends Image {
+            constructor(parent, params) {
+                params = params? params: {};
+                params.width = 100;
+                params.height = 100;
+                params.source = './img.png';
+
+                super(parent, params);
+                this._id['rect']=this;
+
+            }
+
+        }
+    
+
+        class App_Button_1 extends Button {
             constructor(parent, params) {
                 params = params? params: {};
                 params.x = 200;
@@ -475,7 +536,7 @@ class App extends Rectangle {
 
             }
             onClicked() { 
-            this.rotation += 10;
+            this.resolve('rect').visible = !this.resolve('rect').visible;
 
 
 
@@ -484,7 +545,8 @@ class App extends Rectangle {
 
         }
     
-        this.appendChild(new App_Button_0(this));
+        this.appendChild(new App_Image_0(this));
+        this.appendChild(new App_Button_1(this));
 
     }
 

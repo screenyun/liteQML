@@ -43,7 +43,7 @@ Options:
 
     let env = [];
     if(opt.options.env === 'browser')
-        env = ['console', 'window', 'setTimeout', 'clearTimeout'];
+        env = ['console', 'window', 'setTimeout', 'clearTimeout', 'document'];
     else
         env = ['console', 'setTimeout', 'clearTimeout'];
 

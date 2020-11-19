@@ -1,7 +1,7 @@
 Item {
     property real radius
     property color color: "white"
-    function draw(layer) {
+    function drawImpl(layer) {
         let scene = layer.scene,
         ctx = scene.context;
         this.beginNode(layer);

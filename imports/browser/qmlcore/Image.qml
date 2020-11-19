@@ -1,26 +1,26 @@
 Item {
     property string source
 
-    function draw(layer) {
+    function drawImpl(layer) {
         let scene = layer.scene,
         ctx = scene.context;
         this.beginNode(layer);
-        if(this.imgElement) 
-            ctx.drawImage(this.imgElement, -this.width/2, -this.height/2);
+        if(this._imgElement) 
+            ctx.drawImage(this._imgElement, -this.width/2, -this.height/2);
         
         
         this.drawChildren(layer);
         this.endNode(layer);
     }
 
-    function onSourceChanged() {
-        if(!this.imgElement)
-            this.imgElement = document.createElement('img');
-        this.imgElement.src = source;
-        this.imgElement.onload = function () {
+    onSourceChanged: {
+        if(!this._imgElement)
+            this._imgElement = document.createElement('img');
+        this._imgElement.src = source;
+        this._imgElement.onload = function () {
 
-            this.width = this.imgElement.naturalWidth;
-            this.height = this.imgElement.naturalHeight;
+            width = this._imgElement.naturalWidth;
+            height = this._imgElement.naturalHeight;
         }.bind(this)
 
 

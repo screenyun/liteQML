@@ -3,7 +3,7 @@ Item {
     property color color
 
 
-    function draw(layer) {
+    function drawImpl(layer) {
         let scene = layer.scene,
         ctx = scene.context;
 

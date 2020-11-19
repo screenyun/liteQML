@@ -6,6 +6,7 @@ Rectangle {
     radius: 10
     property string text
     property bool hovered: ma.containsMouse
+    clip: true
 
     Text {
         color: "black"
