@@ -137,7 +137,7 @@ QObject
   = type:QIdentifier __ appiled:Applied? __ "{" __ definitions:(d:QDefinitionList __ { return d; })? "}" {
       let id = null;
       let i;
-      if(definitions.attributes) {
+      if(definitions && definitions.attributes) {
         for(i=0; i<definitions.attributes.length; i++) {
           if(definitions.attributes[i].name==='id') {
             id = definitions.attributes[i].value.name;
