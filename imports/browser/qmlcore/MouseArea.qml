@@ -26,10 +26,12 @@ Item {
         if(window.qml.mouseArea===undefined) {
             window.qml.mouseArea = 0
             window.qml.mouseAreas = [this]
-        } else
+            this.key = 0;
+        } else {
             window.qml.mouseArea++
-        this.key = window.qml.mouseArea
-        window.qml.mouseAreas.push(this);
+            this.key = window.qml.mouseArea
+            window.qml.mouseAreas.push(this);
+        }
     }
 
     function mouseMoved() {

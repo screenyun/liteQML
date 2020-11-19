@@ -57,6 +57,7 @@ export class CoreObject {
         this.addProperty('parent');
         this.children = [];
         this.parent = parent? parent: null;
+        this._id = {};
     }
 
     appendChild(child) {
@@ -67,6 +68,7 @@ export class CoreObject {
     // TODO This might have performance issue
     addProperty(name) {
         this.addSignal(`${name}Changed`);
+        this[`_${name}`] = null;
 
         Object.defineProperty(this, name, {
             get: function() {
@@ -108,6 +110,25 @@ export class CoreObject {
 
     has(name) {
         return name in this || this.hasProperty(name);
+    }
+
+    resolve(id, exclude) {
+        let ret = this._id[id];
+        if(!ret) {
+            for(let child of this.children) {
+                if(child !== exclude)
+                    ret = child.resolve(id, this);
+                if(ret)
+                    break;
+            }
+            if(!ret && this.parent && this.parent !== exclude) {
+                ret = this.parent.resolve(id, this);
+            }
+
+            this._id[id] = ret;
+        }
+        
+        return ret;
     }
 }
 

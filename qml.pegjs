@@ -144,10 +144,8 @@ QObject
             break;
           }
         }
-        if(id) {
-          console.log(i)
+        if(id)
           definitions.attributes.splice(i, 1);
-        }
       }
       definitions = definitions || {};
       definitions.id = id;

@@ -92,6 +92,7 @@ class EventEmitter {
         this.addProperty('parent');
         this.children = [];
         this.parent = parent? parent: null;
+        this._id = {};
     }
 
     appendChild(child) {
@@ -102,6 +103,7 @@ class EventEmitter {
     // TODO This might have performance issue
     addProperty(name) {
         this.addSignal(`${name}Changed`);
+        this[`_${name}`] = null;
 
         Object.defineProperty(this, name, {
             get: function() {
@@ -144,6 +146,25 @@ class EventEmitter {
     has(name) {
         return name in this || this.hasProperty(name);
     }
+
+    resolve(id, exclude) {
+        let ret = this._id[id];
+        if(!ret) {
+            for(let child of this.children) {
+                if(child !== exclude)
+                    ret = child.resolve(id, this);
+                if(ret)
+                    break;
+            }
+            if(!ret && this.parent && this.parent !== exclude) {
+                ret = this.parent.resolve(id, this);
+            }
+
+            this._id[id] = ret;
+        }
+        
+        return ret;
+    }
 }
 class Item extends CoreObject {
     constructor(parent, params) {
@@ -179,10 +200,10 @@ class Item extends CoreObject {
         let ctxHit=layer.hit.context
         ctxScene.save();
         ctxHit.save();
-        ctxScene.translate(this.x + this.width / 2, this.y + this.height / 2);
-        ctxScene.rotate(this.rotation * 3.14159 / 180);
-        ctxHit.translate(this.x + this.width / 2, this.y + this.height / 2);
-        ctxHit.rotate(this.rotation * 3.14159 / 180);
+        ctxScene.translate((this.x + (this.width / 2)), (this.y + (this.height / 2)));
+        ctxScene.rotate(((this.rotation * 3.14159) / 180));
+        ctxHit.translate((this.x + (this.width / 2)), (this.y + (this.height / 2)));
+        ctxHit.rotate(((this.rotation * 3.14159) / 180));
         if (this.clip) {
             this.outline(ctxScene);
             ctxScene.clip();
@@ -205,7 +226,7 @@ class Item extends CoreObject {
     outline(ctx) {
     {
         ctx.beginPath();
-        ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
+        ctx.rect((-this.width / 2), (-this.height / 2), this.width, this.height);
 
     }
     }
@@ -215,10 +236,10 @@ class Item extends CoreObject {
         let ctxHit=layer.hit.context
         ctxScene.save();
         ctxHit.save();
-        ctxScene.translate(-this.width / 2, -this.height / 2);
-        ctxHit.translate(-this.width / 2, -this.height / 2);
-        for(let i=0; i < this.children.length; i++)
-            if (this.children[i] instanceof Item) this.children[i].draw(layer); 
+        ctxScene.translate((-this.width / 2), (-this.height / 2));
+        ctxHit.translate((-this.width / 2), (-this.height / 2));
+        for(let i=0; (i < this.children.length); i++)
+            if ((this.children[i] instanceof Item)) this.children[i].draw(layer); 
 
 
         ctxScene.restore();
@@ -245,7 +266,7 @@ class Rectangle extends Item {
     {
         let scene=layer.scene, ctx=scene.context
         this.beginNode(layer);
-        this.roundRect(ctx, -this.width / 2, -this.height / 2, this.width, this.height, this.radius);
+        this.roundRect(ctx, (-this.width / 2), (-this.height / 2), this.width, this.height, this.radius);
         ctx.fillStyle = this.color;
         ctx.fill();
         this.drawChildren(layer);
@@ -254,22 +275,52 @@ class Rectangle extends Item {
     }
     }
     outline(ctx) {
-    this.roundRect(ctx, -this.width / 2, -this.height / 2, this.width, this.height, this.radius);
+    this.roundRect(ctx, (-this.width / 2), (-this.height / 2), this.width, this.height, this.radius);
 
 
     }
     roundRect(ctx,x,y,w,h,r) {
     {
-        if (w < 2 * r) r = w / 2; 
-        if (h < 2 * r) r = h / 2; 
+        if ((w < (2 * r))) r = (w / 2); 
+        if ((h < (2 * r))) r = (h / 2); 
         ctx.beginPath();
-        ctx.moveTo(x + r, y);
-        ctx.arcTo(x + w, y, x + w, y + h, r);
-        ctx.arcTo(x + w, y + h, x, y + h, r);
-        ctx.arcTo(x, y + h, x, y, r);
-        ctx.arcTo(x, y, x + w, y, r);
+        ctx.moveTo((x + r), y);
+        ctx.arcTo((x + w), y, (x + w), (y + h), r);
+        ctx.arcTo((x + w), (y + h), x, (y + h), r);
+        ctx.arcTo(x, (y + h), x, y, r);
+        ctx.arcTo(x, y, (x + w), y, r);
         ctx.closePath();
-;
+        return ctx;
+
+
+    }
+    }
+
+}
+    
+
+class Text extends Item {
+    constructor(parent, params) {
+        params = params? params: {};
+
+        super(parent, params);
+        this.addProperty('text');
+        this.addProperty('color');
+        this.text = params && params.text? params.text: '';
+        this.color = params && params.color? params.color: undefined;
+
+    }
+    draw(layer) {
+    {
+        let scene=layer.scene, ctx=scene.context
+        let txt=ctx.measureText(this.text)
+        this.width = txt.width;
+        this.height = (txt.actualBoundingBoxAscent + txt.actualBoundingBoxDescent);
+        this.beginNode(layer);
+        ctx.fillStyle = this.color;
+        ctx.fillText(this.text, (-this.width / 2), (this.height / 2));
+        this.drawChildren(layer);
+        this.endNode(layer);
 
     }
     }
@@ -298,7 +349,7 @@ class MouseArea extends Item {
         let hit=layer.hit, ctx=hit.context
         this.beginNode(layer);
         ctx.beginPath();
-        ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
+        ctx.rect((-this.width / 2), (-this.height / 2), this.width, this.height);
         ctx.fillStyle = hit.getColorFromIndex(this.key);
         ctx.fill();
         this.drawChildren(layer);
@@ -317,50 +368,19 @@ class MouseArea extends Item {
 
     }
     onCompleted() { 
-    {
-        if (window.qml.mouseArea === undefined) {
-            window.qml.mouseArea = 0;
-            window.qml.mouseAreas = [this];
+    if ((window.qml.mouseArea === undefined)) {
+        window.qml.mouseArea = 0;
+        window.qml.mouseAreas = [this];
+        this.key = 0;
 
-        } else window.qml.mouseArea++;
+    } else {
+        window.qml.mouseArea++;
         this.key = window.qml.mouseArea;
         window.qml.mouseAreas.push(this);
 
     }
 
 
-    }
-
-}
-    
-
-class Timer extends CoreObject {
-    constructor(parent, params) {
-        params = params? params: {};
-
-        super(parent, params);
-        this.addProperty('interval');
-        this.addProperty('repeat');
-        this.addProperty('running');
-        this.addSignal('triggered');
-        this.runningChanged.connect(this.onRunningChanged.bind(this));
-        this.interval = params && params.interval? params.interval: 1000;
-        this.repeat = params && params.repeat? params.repeat: false;
-        this.running = params && params.running? params.running: false;
-
-    }
-    onRunningChanged() { 
-    if (this.running) {
-        let cbk=(function () {
-            this.triggered.emit();
-            if (this.repeat) setTimeout(cbk, this.interval); 
-
-        }).bind(this)
-        this._t = setTimeout(cbk, this.interval);
-
-    } 
-
-
 
 
     }
@@ -368,117 +388,103 @@ class Timer extends CoreObject {
 }
     
 
-
-class App extends Item {
+class Button extends Rectangle {
     constructor(parent, params) {
         params = params? params: {};
+        params.radius = 10;
 
         super(parent, params);
+        this.addProperty('text');
+        this.addProperty('hovered');
+        this.addSignal('clicked');
+        this.text = params && params.text? params.text: '';
+        this.hovered = params && params.hovered? params.hovered: () => { return this.resolve('ma').containsMouse; };
 
-        class App_Rectangle_0 extends Rectangle {
+        class Button_Text_0 extends Text {
             constructor(parent, params) {
                 params = params? params: {};
-                params.width = () => {let parent=this.parent;
- return parent.width
-};;
-                params.height = () => {let parent=this.parent;
- return parent.height
-};;
                 params.color = 'black';
+                params.text = () => { return this.parent.text };;
 
                 super(parent, params);
+                chainConnect(this, 'parent.text', () => {
+                    this._textDirty = true; this.textChanged.emit(); })
+
+            }
+
+        }
+    
+
+        class Button_MouseArea_1 extends MouseArea {
+            constructor(parent, params) {
+                params = params? params: {};
+                params.width = () => { return this.parent.width };;
+                params.height = () => { return this.parent.height };;
+
+                super(parent, params);
+                this._id['ma']=this;
+                this.clicked.connect(this.onClicked.bind(this));
                 chainConnect(this, 'parent.width', () => {
                     this._widthDirty = true; this.widthChanged.emit(); })
                 chainConnect(this, 'parent.height', () => {
                     this._heightDirty = true; this.heightChanged.emit(); })
 
             }
-
-        }
-    
-
-        class App_Rectangle_1 extends Rectangle {
-            constructor(parent, params) {
-                params = params? params: {};
-                params.x = 100;
-                params.y = 100;
-                params.width = 50;
-                params.height = 50;
-                params.color = 'white';
-                params.radius = 10;
-
-                super(parent, params);
-
-                class App_Rectangle_1_MouseArea_0 extends MouseArea {
-                    constructor(parent, params) {
-                        params = params? params: {};
-                        params.width = () => {let parent=this.parent;
- return parent.width
-};;
-                        params.height = () => {let parent=this.parent;
- return parent.height
-};;
-
-                        super(parent, params);
-                        chainConnect(this, 'parent.width', () => {
-                            this._widthDirty = true; this.widthChanged.emit(); })
-                        chainConnect(this, 'parent.height', () => {
-                            this._heightDirty = true; this.heightChanged.emit(); })
-                        this.containsMouseChanged.connect(this.onContainsMouseChanged.bind(this));
-                        this.positionChanged.connect(this.onPositionChanged.bind(this));
-
-                    }
-                    onContainsMouseChanged() { 
-                    this.parent.color = this.containsMouse?'red':'white';
+            onClicked() { 
+            this.parent.clicked.emit();
 
 
 
-
-                    }
-                    onPositionChanged() { 
-                    {
-                        let parent=this.parent
-                        parent.x = this.mouseX - parent.width / 2;
-                        parent.y = this.mouseY - parent.height / 2;
-
-                    }
-
-
-                    }
-
-                }
-    
-
-                class App_Rectangle_1_Timer_1 extends Timer {
-                    constructor(parent, params) {
-                        params = params? params: {};
-                        params.repeat = true;
-                        params.running = true;
-                        params.interval = 100;
-
-                        super(parent, params);
-                        this.triggered.connect(this.onTriggered.bind(this));
-
-                    }
-                    onTriggered() { 
-                    this.parent.rotation += 10;
-
-
-
-
-                    }
-
-                }
-    
-                this.appendChild(new App_Rectangle_1_MouseArea_0(this));
-                this.appendChild(new App_Rectangle_1_Timer_1(this));
 
             }
 
         }
     
-        this.appendChild(new App_Rectangle_0(this));
-        this.appendChild(new App_Rectangle_1(this));
+        this.appendChild(new Button_Text_0(this));
+        this.appendChild(new Button_MouseArea_1(this));
+        chainConnect(this.resolve('ma'), 'containsMouse', () => {
+                            this._hoveredDirty = true; this.hoveredChanged.emit(); })
+
+    }
+
+}
+    
+
+
+class App extends Rectangle {
+    constructor(parent, params) {
+        params = params? params: {};
+        params.color = 'white';
+
+        super(parent, params);
+
+        class App_Button_0 extends Button {
+            constructor(parent, params) {
+                params = params? params: {};
+                params.x = 200;
+                params.y = 300;
+                params.width = 100;
+                params.height = 50;
+                params.color = () => { return this.hovered?'red':'blue' };;
+                params.text = '羅凱旋';
+
+                super(parent, params);
+                this.clicked.connect(this.onClicked.bind(this));
+                chainConnect(this, 'hovered', () => {
+                    this._colorDirty = true; this.colorChanged.emit(); })
+
+            }
+            onClicked() { 
+            this.rotation += 10;
+
+
+
+
+            }
+
+        }
+    
+        this.appendChild(new App_Button_0(this));
 
     }
 

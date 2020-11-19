@@ -3,7 +3,7 @@ Animation {
     property string property
     property int duration: 1000
 
-    function onCompleted() {
+    onCompleted: {
         this.targetChanged.connect(this._installAnimation.bind(this));
         this.propertyChanged.connect(this._installAnimation.bind(this));
         this.runningChanged.connect(function() {
@@ -13,8 +13,10 @@ Animation {
     }
 
     function _installAnimation() {
-        if(this.target instanceof CoreObject && this.running) {
+        if(target instanceof CoreObject && this.running) {
             if(this.target.hasProperty(this.property)) {
+                // record current from and to
+                this.snapshot();
                 this.running = true;
                 this.started.emit();
                 this._timestamp = Date.now();

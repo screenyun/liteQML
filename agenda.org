@@ -1,4 +1,4 @@
-* Schedule [64%]
+* v0.1 [100%]
 ** DONE EventEmitter
 ** DONE CoreObject [2/2]
    - [X] signal
@@ -19,19 +19,29 @@
    - [X] FunctionBody
 ** DONE Compile to binary executable
    There are some issuses. String(function) will no longer be source code.
-** TODO QML id Scoping
-** TODO Drawing Module [1/1]
-   - [X] concrete.js for browser
-   - [ ] nanovg/glfw3 backend for desktop
-   - [ ] Skia backend for desktop
+** DONE QML id Scoping
+
+* v0.11 [0%]
+** TODO Anchor System
+** TODO Improve runtime [0/1]
+   Currently, the runtime has no scheduling system.
+   - [ ] Add event queue
+** TODO Improve Caching System
+   It's unnecessary to 
+
+* Backlog [0/3]
 ** TODO Process argopt [1/2]
    - [X] Basic input output
    - [ ] ES Target Selection
-** TODO Add Test for Dep Tracking
-** TODO ES6 PEG Grammar [1/2]
+** TODO ES6 PEG Grammar [1/4]
    - [ ] Template Literal
    - [ ] Arrow Function
    - [X] Analyze identifier dep
    - [ ] Line number
+** TODO Drawing Module [1/3]
+   - [X] concrete.js for browser
+   - [ ] nanovg/glfw3 backend for desktop
+   - [ ] Skia backend for desktop
+ 
 ** TODO Language Server Protocol
    This should be postpone until we are able to track line number

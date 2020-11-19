@@ -153,6 +153,10 @@ export class JSClassIR {
         return this.class.summary.signals.indexOf(name)!=-1? {params: []}: undefined;
     }
 
+    resolve() {
+        return undefined;
+    }
+
 }
 
 class ImportSolver {
@@ -231,7 +235,7 @@ class ImportSolver {
 
 /* Do basic checking and linting */
 export class ClassIR {
-    constructor(options) {
+    constructor(options, parentNode) {
         this.importSolver = new ImportSolver(options.scriptPath);
 
         // copy?
@@ -245,10 +249,13 @@ export class ClassIR {
         this.attributes = {};
         this.children = [];
         this.parent = null;
+        this.parentNode = parentNode? parentNode: null;
         this.filename = '';
         this.silent = options.silent
         
         this.noCache = options.noCache;
+        // for static id resolve
+        this._id = {};
 
         options.env = options.env? options.env: [];
         this.env = [...new Set(['undefined', 'NaN', 'console', 'this', 'globalThis', ...options.env])];
@@ -311,6 +318,11 @@ export class ClassIR {
             }
             this.parent = this.consumedType[resolved];
 
+            if(ast.id) {
+                this.id = ast.id;
+                this._id[ast.id] = this;
+            }
+
             if(ast.functions) {
                 this.consumeFunctionsDecl(ast.functions);
             }
@@ -337,7 +349,7 @@ export class ClassIR {
 
             this.analyzeFunctionDep();
             this.analyzeHandlerDep();
-            this.analyzeExpressionDep();
+            //this.analyzeExpressionDep();
         } else
             throw new Error(`Invalid AST (${this.filename})`);
     }
@@ -419,9 +431,9 @@ export class ClassIR {
             let childIR = new ClassIR({scriptPath: '',
                 consumedType: this.consumedType,
                 noCache: this.noCache,
-                silent: true,
+                silent: false,
                 env: this.env
-            });
+            }, this);
             // share import solver
             childIR.importSolver = this.importSolver;
             childIR.filename = this.filename;
@@ -519,6 +531,25 @@ export class ClassIR {
             this.consumeQMLFileAST(ast, filename);
         } else
             throw new Error(`File ${filename} not found`);
+    }
+
+    resolve(id, exclude) {
+        let ret = this._id[id];
+        if(!ret) {
+            for(let child of this.children) {
+                if(child !== exclude)
+                    ret = child.resolve(id, this);
+                if(ret)
+                    break;
+            }
+            if(!ret && this.parentNode && this.parentNode !== exclude) {
+                ret = this.parentNode.resolve(id, this);
+            }
+
+            this._id[id] = ret;
+        }
+        
+        return ret;
     }
 }
 
