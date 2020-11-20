@@ -356,7 +356,7 @@ export class ClassIR {
                     // share import solver
                     created.importSolver = this.importSolver;
                     created.filename = this.filename;
-                    created.consumeObjectAST(p.value, `${this.objName}_${p.name}`);
+                    created.consumeObjectAST(attr.value, `${this.objName}_${attr.name}`);
                     this.attributes[attr.name].value = created;
                 }
                 

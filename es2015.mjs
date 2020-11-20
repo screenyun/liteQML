@@ -363,7 +363,12 @@ ${' '.repeat(indent + 4)}this._${aname}Dirty = true; this.${aname}Changed.emit()
                 initVal = `() => { return ${code} };`;
                 console.log('Warning: Expression binding is not fully support yet');
                 break;
-            case 'Object':
+            case 'QObject':
+                let generator = new Generator(avalue.value, this.generated);
+                generator.generate(indent);
+                this.depSrc += generator.depSrc;            
+                this.attrInit += generator.src;
+                initVal = `new ${generator.classIR.objName}()`;
                 break;
         }
         
@@ -391,8 +396,6 @@ ${' '.repeat(indent + 4)}this._${aname}Dirty = true; this.${aname}Changed.emit()
             default:
                 initVal = "null";
                 break;
-                console.log(pvalue.type);
-                console.log(pvalue.initType);
         }
         if (pvalue.initType === 'Expression') {
             
@@ -412,7 +415,11 @@ ${' '.repeat(indent + 4)}this._${pname}Dirty = true; this.${pname}Changed.emit()
         }
 
         if (pvalue.initType === 'QObject') {
-            console.log('Warning: Object binding is not implemented yet');
+            let generator = new Generator(pvalue.value, this.generated);
+            generator.generate(indent);
+            this.depSrc += generator.depSrc;            
+            this.propInit += generator.src;
+            initVal = `new ${generator.classIR.objName}()`;
         }
         this.propDecl += `${' '.repeat(indent)}this.addProperty('${pname}');\n`;
         this.propInit += `${' '.repeat(indent)}this.${pname} = params && params.${pname}? params.${pname}: ${initVal};\n`;

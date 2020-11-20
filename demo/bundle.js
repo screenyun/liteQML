@@ -444,9 +444,11 @@ class Button extends Rectangle {
         super(parent, params);
         this.addProperty('text');
         this.addProperty('hovered');
+        this.addProperty('img');
         this.addSignal('clicked');
         this.text = params && params.text? params.text: '';
         this.hovered = params && params.hovered? params.hovered: () => { return this.resolve('ma').containsMouse; };
+        this.img = params && params.img? params.img: null;
 
         class Button_Text_0 extends Text {
             constructor(parent, params) {
@@ -504,8 +506,7 @@ class App extends Rectangle {
         params.color = 'white';
 
         super(parent, params);
-        this.addProperty('img');
-        this.img = params && params.img? params.img: () => { return this.color; };
+        this._id['root']=this;
 
         class App_Image_0 extends Image {
             constructor(parent, params) {
@@ -533,6 +534,18 @@ class App extends Rectangle {
                 params.color = () => { return this.hovered?'red':'blue' };;
                 params.text = '羅凱旋';
 
+                class App_Button_1_img extends Image {
+                    constructor(parent, params) {
+                        params = params? params: {};
+
+                        super(parent, params);
+
+                    }
+
+
+                }
+                params.img = new App_Button_1_img();
+
                 super(parent, params);
                 this.clicked.connect(this.onClicked.bind(this));
                 chainConnect(this, 'hovered', () => {
@@ -544,6 +557,7 @@ class App extends Rectangle {
             {
                 let myrect=this.resolve('rect')
                 myrect.visible = !myrect.visible;
+                console.log(this.resolve('root').img.source);
 
             }
 
@@ -552,8 +566,6 @@ class App extends Rectangle {
 
         }
         this.appendChild(new App_Button_1(this));
-        chainConnect(this, 'color', () => {
-            this._imgDirty = true; this.imgChanged.emit(); })
 
     }
 

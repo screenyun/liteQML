@@ -2,8 +2,8 @@ import qmlcore 1.0
 import browser.qmlcore 1.0
 
 Rectangle {
+    id: root
     color: "white"
-    property color img: color
 
     Image {
         id: rect
@@ -18,10 +18,14 @@ Rectangle {
         height: 50
         color: hovered? "red": "blue"
         text: "羅凱旋"
+        img: Image {
+            
+        }
 
         onClicked: {
             let myrect = rect;
             myrect.visible = !myrect.visible;
+            console.log(root.img.source)
         }
     }
 

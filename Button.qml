@@ -8,6 +8,8 @@ Rectangle {
     property bool hovered: ma.containsMouse
     clip: true
 
+    property Image img
+
     Text {
         color: "black"
         text: parent.text

@@ -21,8 +21,8 @@
    There are some issuses. String(function) will no longer be source code.
 ** DONE QML id Scoping
 
-* v0.2 [25%]
-** TODO Support Object Property
+* v0.2 [50%]
+** DONE Support Object Property
 ** TODO Anchor System
 ** TODO Alias Property
 ** DONE Refactor Generator
