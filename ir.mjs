@@ -272,6 +272,20 @@ export class ClassIR {
                     initType: p.type,
                     value: p.value
                 };
+                if(p.type == 'QObject') {
+                    // create a sandbox for children
+                    let created = new ClassIR({scriptPath: '',
+                        consumedType: this.consumedType,
+                        noCache: this.noCache,
+                        silent: false,
+                        env: this.env
+                    }, null);
+                    // share import solver
+                    created.importSolver = this.importSolver;
+                    created.filename = this.filename;
+                    created.consumeObjectAST(p.value, `${this.objName}_${p.name}`);
+                    this.props[p.name].value = created;
+                }
                 this.signals[`${p.name}Changed`] = {
                     params: []
                 }
@@ -326,7 +340,25 @@ export class ClassIR {
             if(prop) {
                 if(attr.name in this.attributes)
                     throw new Error(`Re-assign to attribute ${attr.name} (${this.filename})`);
-                this.attributes[attr.name] = {ptype: prop.type, type: attr.type, value: attr.value};
+                this.attributes[attr.name] = {
+                    ptype: prop.type, 
+                    type: attr.type, 
+                    value: attr.value
+                };
+                if(attr.type === 'QObject') {
+                    // create a sandbox for children
+                    let created = new ClassIR({scriptPath: '',
+                        consumedType: this.consumedType,
+                        noCache: this.noCache,
+                        silent: false,
+                        env: this.env
+                    }, null);
+                    // share import solver
+                    created.importSolver = this.importSolver;
+                    created.filename = this.filename;
+                    created.consumeObjectAST(p.value, `${this.objName}_${p.name}`);
+                    this.attributes[attr.name].value = created;
+                }
                 
             } else
                 throw new Error(`Property ${attr.name} does not exist in base class (${this.filename})`);

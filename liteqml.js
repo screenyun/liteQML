@@ -1,5 +1,5 @@
 import * as IR from './ir.mjs';
-import {generate} from './es2015.mjs';
+import {Generator} from './es2015.mjs';
 import {chainConnect} from './qmlcore.mjs'
 import {dirname, polyfill, writeFile, basename} from './utils.mjs';
 import {Getopt} from './getopt.mjs'
@@ -56,11 +56,11 @@ Options:
 
     ir.addImportPath('imports');
     ir.load(inputFile);
-    const [code, dep] = generate(ir);
+    let generator = new Generator(ir);
+    const code = generator.generate();
     let sourceCode = `
 ${polyfill}
 ${chainConnect}
-${dep}
 ${code}
 polyfill().then(() => {
     window.qml = {};

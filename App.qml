@@ -3,6 +3,7 @@ import browser.qmlcore 1.0
 
 Rectangle {
     color: "white"
+    property color img: color
 
     Image {
         id: rect
@@ -19,7 +20,8 @@ Rectangle {
         text: "羅凱旋"
 
         onClicked: {
-            rect.visible = !rect.visible;
+            let myrect = rect;
+            myrect.visible = !myrect.visible;
         }
     }
 

@@ -21,10 +21,12 @@
    There are some issuses. String(function) will no longer be source code.
 ** DONE QML id Scoping
 
-* v0.2 [0%]
+* v0.2 [25%]
 ** TODO Support Object Property
 ** TODO Anchor System
 ** TODO Alias Property
+** DONE Refactor Generator
+* v0.3 [0%]
 * Backlog [0/3]
 ** TODO Process argopt [1/2]
    - [X] Basic input output
@@ -50,3 +52,4 @@
 ** TODO Improve Caching System during Generating Phase
    It's unnecessary to re-generate all QMLs. 
 ** TODO More Strict Type System
+** TODO Port to TypeScript

@@ -87,7 +87,8 @@ class EventEmitter {
         for(let x of this.handlers)
             x(...args);
     }
-}class CoreObject {
+}
+class CoreObject {
     constructor(parent) {
         this.addProperty('parent');
         this.children = [];
@@ -166,6 +167,7 @@ class EventEmitter {
         return ret;
     }
 }
+
 class Item extends CoreObject {
     constructor(parent, params) {
         params = params? params: {};
@@ -255,8 +257,8 @@ class Item extends CoreObject {
     }
     }
 
+
 }
-    
 
 class Rectangle extends Item {
     constructor(parent, params) {
@@ -266,7 +268,7 @@ class Rectangle extends Item {
         this.addProperty('radius');
         this.addProperty('color');
         this.radius = params && params.radius? params.radius: 0;
-        this.color = params && params.color? params.color: undefined;
+        this.color = params && params.color? params.color: 'white';
 
     }
     drawImpl(layer) {
@@ -303,8 +305,8 @@ class Rectangle extends Item {
     }
     }
 
+
 }
-    
 
 class Image extends Item {
     constructor(parent, params) {
@@ -326,6 +328,7 @@ class Image extends Item {
 
     }
     }
+
     onSourceChanged() { 
     {
         if (!this._imgElement) this._imgElement = document.createElement('img'); 
@@ -342,7 +345,6 @@ class Image extends Item {
     }
 
 }
-    
 
 class Text extends Item {
     constructor(parent, params) {
@@ -352,7 +354,7 @@ class Text extends Item {
         this.addProperty('text');
         this.addProperty('color');
         this.text = params && params.text? params.text: '';
-        this.color = params && params.color? params.color: undefined;
+        this.color = params && params.color? params.color: "white";
 
     }
     drawImpl(layer) {
@@ -370,8 +372,8 @@ class Text extends Item {
     }
     }
 
+
 }
-    
 
 class MouseArea extends Item {
     constructor(parent, params) {
@@ -412,6 +414,7 @@ class MouseArea extends Item {
 
 
     }
+
     onCompleted() { 
     if ((window.qml.mouseArea === undefined)) {
         window.qml.mouseArea = 0;
@@ -431,7 +434,6 @@ class MouseArea extends Item {
     }
 
 }
-    
 
 class Button extends Rectangle {
     constructor(parent, params) {
@@ -458,8 +460,9 @@ class Button extends Rectangle {
 
             }
 
+
         }
-    
+        this.appendChild(new Button_Text_0(this));
 
         class Button_MouseArea_1 extends MouseArea {
             constructor(parent, params) {
@@ -476,6 +479,7 @@ class Button extends Rectangle {
                     this._heightDirty = true; this.heightChanged.emit(); })
 
             }
+
             onClicked() { 
             this.parent.clicked.emit();
 
@@ -485,17 +489,14 @@ class Button extends Rectangle {
             }
 
         }
-    
-        this.appendChild(new Button_Text_0(this));
         this.appendChild(new Button_MouseArea_1(this));
         chainConnect(this.resolve('ma'), 'containsMouse', () => {
-                            this._hoveredDirty = true; this.hoveredChanged.emit(); })
+            this._hoveredDirty = true; this.hoveredChanged.emit(); })
 
     }
 
-}
-    
 
+}
 
 class App extends Rectangle {
     constructor(parent, params) {
@@ -503,6 +504,8 @@ class App extends Rectangle {
         params.color = 'white';
 
         super(parent, params);
+        this.addProperty('img');
+        this.img = params && params.img? params.img: () => { return this.color; };
 
         class App_Image_0 extends Image {
             constructor(parent, params) {
@@ -516,8 +519,9 @@ class App extends Rectangle {
 
             }
 
+
         }
-    
+        this.appendChild(new App_Image_0(this));
 
         class App_Button_1 extends Button {
             constructor(parent, params) {
@@ -535,23 +539,26 @@ class App extends Rectangle {
                     this._colorDirty = true; this.colorChanged.emit(); })
 
             }
+
             onClicked() { 
-            this.resolve('rect').visible = !this.resolve('rect').visible;
+            {
+                let myrect=this.resolve('rect')
+                myrect.visible = !myrect.visible;
 
-
+            }
 
 
             }
 
         }
-    
-        this.appendChild(new App_Image_0(this));
         this.appendChild(new App_Button_1(this));
+        chainConnect(this, 'color', () => {
+            this._imgDirty = true; this.imgChanged.emit(); })
 
     }
 
+
 }
-    
 
 polyfill().then(() => {
     window.qml = {};
