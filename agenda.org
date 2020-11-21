@@ -21,15 +21,16 @@
    There are some issuses. String(function) will no longer be source code.
 ** DONE QML id Scoping
    
-* v0.2 [50%]
+* v0.2 [75%]
 ** DONE Support Object Property
 ** DONE Refactor Generator
+** DONE Property's Member Binding
 ** TODO Computed Block Property
-** TODO Property's Member Binding
 * v0.3 [0%]
 ** TODO Alias Property
 ** TODO Anchor System
 ** TODO Better IR Design
+** TODO Prevent Property Reinitialize
 * Backlog [0/3]
 ** TODO Process argopt [1/2]
    - [X] Basic input output
