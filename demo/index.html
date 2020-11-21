@@ -82,10 +82,12 @@
                     obj.mouseMoved();
                 }
                 
-                window.qml.mouseAreas.forEach(x => {
-                    if(x != obj)
-                        x.containsMouse = false;
-                })
+                if(window.qml.mouseAreas) {
+                    window.qml.mouseAreas.forEach(x => {
+                        if(x != obj)
+                            x.containsMouse = false;
+                    })
+                }
             };
             concreteContainer.onclick = (evt) => {
                 let obj = getObject(evt);
