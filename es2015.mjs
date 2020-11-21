@@ -11,9 +11,6 @@ export class Translator {
         this.thisObj = thisObj;
         this.indent = indent;
         this.scope = scope;
-
-        this.usedIDs = [];
-        this.usedThis = {};
     }
 
     resolveSymbol(symbol, scope) {
@@ -21,7 +18,7 @@ export class Translator {
         if (head != 'this') {
             if (!scope.has(head)) {
                 if (this.thisObj.has(head)) {
-                    this.usedThis[head] = symbol;
+                    this.usedThis.add(symbol);
                     symbol = `this.${symbol}`;
                 } else {
                     if (head.match(/^[a-z]/)) {
@@ -47,10 +44,13 @@ export class Translator {
         if (Array.isArray(scope)) {
             scope = new Set(scope);
         }
+        this.usedIDs = [];
+        this.usedThis = new Set();
         let ret = this._translateCode(ast, scope, indent);
         if (isSymbol(ast.type)) {
             ret = this.resolveSymbol(ret, scope);
         }
+        this.usedThis = [...this.usedThis];
         return ret;
     }
 
@@ -327,10 +327,8 @@ export class Generator {
         this.src = `
 ${indentStr}class ${this.classIR.objName} extends ${this.classIR.parent.objName} {
 ${indentStr}    constructor(parent, params) {
-${indentStr}        params = params? params: {};
-${this.attrInit}
 ${indentStr}        super(parent, params);
-${this.idInit}${this.propDecl}${this.signalDecl}${this.handlersConnections}${this.propInit}${this.childSrc}${this.postPropInit}${this.attrPostInit}${this.finalize}
+${this.idInit}${this.propDecl}${this.signalDecl}${this.handlersConnections}${this.propInit}${this.attrInit}${this.childSrc}${this.postPropInit}${this.attrPostInit}${this.finalize}
 ${indentStr}    }
 ${this.funcsDecl}
 ${this.handlersDecl}
@@ -352,15 +350,7 @@ ${indentStr}}
                 let ast = parseExpression(avalue.value.trim());
                 let trans = new Translator([], this.classIR, 0);
                 let code = trans.translateCode(ast);
-                for (const [a, chain] of Object.entries(trans.usedThis)) {
-                    postAssign += `${' '.repeat(indent)}chainConnect(this, '${chain}', () => {
-${' '.repeat(indent + 4)}this._${aname}Dirty = true; this.${aname}Changed.emit(); })\n`;
-                }
-                for (let dep of trans.usedIDs) {
-                    postAssign += `${' '.repeat(indent)}chainConnect(this.resolve('${dep.object}'), '${dep.prop}', () => {
-		    ${' '.repeat(indent + 4)}this._${aname}Dirty = true; this.${aname}Changed.emit(); })\n`;
-                }
-                initVal = `() => { return ${code} };`;
+                initVal = `Binding(() => { return ${code}; }, this, ${JSON.stringify(trans.usedThis)}, ${JSON.stringify(trans.usedIDs)})`;
                 console.log('Warning: Expression binding is not fully support yet');
                 break;
             case 'QObject':
@@ -372,8 +362,7 @@ ${' '.repeat(indent + 4)}this._${aname}Dirty = true; this.${aname}Changed.emit()
                 initVal = `${generator.classIR.objName}`;
                 break;
         }
-        
-        this.attrInit += `${' '.repeat(indent)}params.${aname} = ${initVal};\n`;
+        this.attrInit += `${' '.repeat(indent)}this.${aname} = ${initVal};\n`;
         this.attrPostInit += postAssign;
     }
 
@@ -382,7 +371,6 @@ ${' '.repeat(indent + 4)}this._${aname}Dirty = true; this.${aname}Changed.emit()
         let postAssign = '';
         
         let isObject = false;
-        let objectNew = `new params.${pname}(this)`;
         switch (pvalue.type) {
             case 'bool':
                 initVal = pvalue.value ? `${pvalue.value}` : 'false';
@@ -397,8 +385,10 @@ ${' '.repeat(indent + 4)}this._${aname}Dirty = true; this.${aname}Changed.emit()
             case 'color':
                 initVal = pvalue.value ? `'${pvalue.value}'` : `"white"`;
                 break;
+            case 'var':
+                throw new Error('Cannot use variant type currently');
             default:
-                if(pvalue.type[0].match(/^[A-Z]/)) {
+                if(pvalue.type.match(/^[A-Z]/)) {
                     isObject = true;
                 }
                 initVal = "null";
@@ -409,15 +399,7 @@ ${' '.repeat(indent + 4)}this._${aname}Dirty = true; this.${aname}Changed.emit()
             let ast = parseExpression(pvalue.value.trim());
             let trans = new Translator([], this.classIR, 0);
             let code = trans.translateCode(ast);
-            for (const [a, chain] of Object.entries(trans.usedThis)) {
-                postAssign += `${' '.repeat(indent)}chainConnect(this, '${chain}', () => {
-${' '.repeat(indent + 4)}this._${pname}Dirty = true; this.${pname}Changed.emit(); })\n`;
-            }
-            for (let dep of trans.usedIDs) {
-                postAssign += `${' '.repeat(indent)}chainConnect(this.resolve('${dep.object}'), '${dep.prop}', () => {
-${' '.repeat(indent + 4)}this._${pname}Dirty = true; this.${pname}Changed.emit(); })\n`;
-            }
-            initVal = `() => { return ${code}; }`;
+            initVal = `Binding(() => { return ${code}; }, this, ${JSON.stringify(trans.usedThis)}, ${JSON.stringify(trans.usedIDs)})`;
             console.log('Warning: Expression binding is not fully support yet');
         }
 
@@ -429,7 +411,7 @@ ${' '.repeat(indent + 4)}this._${pname}Dirty = true; this.${pname}Changed.emit()
             initVal = `new ${generator.classIR.objName}(this)`;
         }
         this.propDecl += `${' '.repeat(indent)}this.addProperty('${pname}');\n`;
-        this.propInit += `${' '.repeat(indent)}this.${pname} = params && params.${pname}? ${isObject? objectNew: `params.${pname}`}: ${initVal};\n`;
+        this.propInit += `${' '.repeat(indent)}this.${pname} = params && params.${pname}? params.${pname}: ${initVal};\n`;
         this.postPropInit += postAssign;
     }
 

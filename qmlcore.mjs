@@ -31,6 +31,8 @@ export class EventEmitter {
     }
 
     connect(handler) {
+        if(handler === undefined)
+            debugger
         this.handlers.push(handler);
     }
 
@@ -41,7 +43,8 @@ export class EventEmitter {
     }
 
     emit(...args) {
-        for(let x of this.handlers)
+        // iterate from copied handlers to prevent updating to handlers at the same time
+        for(let x of [...this.handlers])
             x(...args);
     }
 }
@@ -51,6 +54,86 @@ EventEmitter.summary = {
     functions: [],
     deps: []
 };
+
+export class PropertyStorage {
+    constructor(owner, signal) {
+        this._owner = owner;
+        this._signal = signal;
+        this._dispose = [];
+        this.assign(null);
+    }
+
+    evaluate() {
+        if(this._dirty) {
+            this._cache = this._expr();
+            this._dirty = false;
+        }
+        return this._cache;
+    }
+
+    assign(expr, context, thisDep, globalDep) {
+        // uninitialized will be undefined
+        let value = this.evaluate();
+        if(expr !== value) {
+            this.unregister();
+            if(typeof expr === 'function') {
+                this._expr = expr;
+                this._cache = null;
+                
+                this._dirty = true;
+                this._thisDep = thisDep;
+                this._globalDep = globalDep;
+                this.register(context);
+            } else {
+                this._cache = this._expr = expr;
+                this._dirty = false;
+                // uncessary to clear globalDep and thisDep
+            }
+            this._signal.emit();
+        }
+    }
+
+    register(context) {
+        let slot = () => {
+            this._dirty = true;
+            this._signal.emit();
+        };
+        if(this._thisDep) {
+            for(const dep of this._thisDep)
+                this._dispose.push(chainConnect(context, dep, slot));
+        }
+        if(this._globalDep) {
+            for(const dep of this._globalDep) {
+                let obj = this._owner.resolve(dep.object);
+                this._dispose.push(chainConnect(obj, dep.prop, slot));
+            }
+        }
+    }
+
+    unregister() {
+        for(const d of this._dispose) {
+            d();
+        }
+        this._dispose = [];
+    }
+}
+PropertyStorage.summary = {
+    props: [],
+    signals: [],
+    functions: [],
+    deps: []
+};
+
+export function Binding(expr, ctx, thisDep, globalDep) {
+    return {
+        context: ctx,
+        expr: expr.bind(ctx),
+        thisDep: thisDep,
+        globalDep: globalDep,
+        // TODO This is ugly
+        bindingMark: true
+    };
+}
 
 export class CoreObject {
     constructor(parent) {
@@ -67,29 +150,19 @@ export class CoreObject {
 
     // TODO This might have performance issue
     addProperty(name) {
-        this.addSignal(`${name}Changed`);
-        this[`_${name}`] = null;
+        let signal = this.addSignal(`${name}Changed`);
+        this[`_${name}`] = new PropertyStorage(this, signal);
 
         Object.defineProperty(this, name, {
             get: function() {
-                return this[`_${name}Dirty`]? this[`_${name}Closure`](): this[`_${name}`];
+                return this[`_${name}`].evaluate();
             },
             set: function(val) {
-                let ref = this[`_${name}`];
-                if(val != ref) {
-                    // this is okay, if we only pass lambda or literal
-                    if(typeof val == 'function') {
-                        this[`_${name}Closure`] = () => {
-                            this[`_${name}Dirty`] = false;
-                            return this[`_${name}`] = val();
-                        };
-                        this[`_${name}Dirty`] = true;
-                    } else {
-                        this[`_${name}`] = val;
-                        this[`_${name}Dirty`] = false;
-                    }
-                    this[`${name}Changed`].emit();
-                }
+                if(val && typeof val === 'object' && val.bindingMark) {
+                    // expr binding
+                    this[`_${name}`].assign(val.expr, val.context, val.thisDep, val.globalDep);
+                } else
+                    this[`_${name}`].assign(val);
             }
         });
     }
@@ -101,6 +174,7 @@ export class CoreObject {
             configurable: false,
             enumerable: true
         });
+        return this[name];
     }
 
     hasProperty(prop) {
@@ -136,13 +210,15 @@ CoreObject.summary = {
     props: ['parent', 'children'],
     signals: ['completed'],
     functions: ['appendChild', 'addSignal', 'hasProperty', 'has'],
-    deps: [EventEmitter]
+    deps: [EventEmitter, PropertyStorage]
 };
 
 
 // When calling with chained member notation like chainConnect(this, "a.b");
 // it will track dependancies.
 export function chainConnect(target, memberNotation, callback) {
+    if(!target)
+        return () => {};
     let dotPos = memberNotation.indexOf('.');
     if(dotPos >= 0) {
         let member = memberNotation.substr(0, dotPos);
@@ -151,11 +227,12 @@ export function chainConnect(target, memberNotation, callback) {
             let childDispose = chainConnect(target[`${member}`], subNotation, callback);
 
             let cbk = () => {
+                console.log('wtf')
                 // chain dispose
                 childDispose();
 
                 // reconnect
-                childDispose = chainConnect(target[`${member}`], subNotation);
+                childDispose = chainConnect(target[`${member}`], subNotation, callback);
 
                 // re-eval in this level
                 callback();

@@ -32,7 +32,19 @@ async function polyfill() {
     if(!('info' in console))
         console.info = console.log
 }
+function Binding(expr, ctx, thisDep, globalDep) {
+    return {
+        context: ctx,
+        expr: expr.bind(ctx),
+        thisDep: thisDep,
+        globalDep: globalDep,
+        // TODO This is ugly
+        bindingMark: true
+    };
+}
 function chainConnect(target, memberNotation, callback) {
+    if(!target)
+        return () => {};
     let dotPos = memberNotation.indexOf('.');
     if(dotPos >= 0) {
         let member = memberNotation.substr(0, dotPos);
@@ -41,11 +53,12 @@ function chainConnect(target, memberNotation, callback) {
             let childDispose = chainConnect(target[`${member}`], subNotation, callback);
 
             let cbk = () => {
+                console.log('wtf')
                 // chain dispose
                 childDispose();
 
                 // reconnect
-                childDispose = chainConnect(target[`${member}`], subNotation);
+                childDispose = chainConnect(target[`${member}`], subNotation, callback);
 
                 // re-eval in this level
                 callback();
@@ -74,6 +87,8 @@ class EventEmitter {
     }
 
     connect(handler) {
+        if(handler === undefined)
+            debugger
         this.handlers.push(handler);
     }
 
@@ -84,8 +99,71 @@ class EventEmitter {
     }
 
     emit(...args) {
-        for(let x of this.handlers)
+        // iterate from copied handlers to prevent updating to handlers at the same time
+        for(let x of [...this.handlers])
             x(...args);
+    }
+}
+class PropertyStorage {
+    constructor(owner, signal) {
+        this._owner = owner;
+        this._signal = signal;
+        this._dispose = [];
+        this.assign(null);
+    }
+
+    evaluate() {
+        if(this._dirty) {
+            this._cache = this._expr();
+            this._dirty = false;
+        }
+        return this._cache;
+    }
+
+    assign(expr, context, thisDep, globalDep) {
+        // uninitialized will be undefined
+        let value = this.evaluate();
+        if(expr !== value) {
+            this.unregister();
+            if(typeof expr === 'function') {
+                this._expr = expr;
+                this._cache = null;
+                
+                this._dirty = true;
+                this._thisDep = thisDep;
+                this._globalDep = globalDep;
+                this.register(context);
+            } else {
+                this._cache = this._expr = expr;
+                this._dirty = false;
+                // uncessary to clear globalDep and thisDep
+            }
+            this._signal.emit();
+        }
+    }
+
+    register(context) {
+        let slot = () => {
+            this._dirty = true;
+            this._signal.emit();
+        };
+        if(this._thisDep) {
+            for(const dep of this._thisDep)
+                this._dispose.push(chainConnect(context, dep, slot));
+        }
+        if(this._globalDep) {
+            for(const dep of this._globalDep) {
+                let obj = this._owner.resolve(dep.object);
+                this._dispose.push(chainConnect(obj, dep.prop, slot));
+            }
+        }
+    }
+
+    unregister() {
+        for(const d of this._dispose) {
+            d();
+        }
+        this._dispose = [];
     }
 }
 class CoreObject {
@@ -103,29 +181,19 @@ class CoreObject {
 
     // TODO This might have performance issue
     addProperty(name) {
-        this.addSignal(`${name}Changed`);
-        this[`_${name}`] = null;
+        let signal = this.addSignal(`${name}Changed`);
+        this[`_${name}`] = new PropertyStorage(this, signal);
 
         Object.defineProperty(this, name, {
             get: function() {
-                return this[`_${name}Dirty`]? this[`_${name}Closure`](): this[`_${name}`];
+                return this[`_${name}`].evaluate();
             },
             set: function(val) {
-                let ref = this[`_${name}`];
-                if(val != ref) {
-                    // this is okay, if we only pass lambda or literal
-                    if(typeof val == 'function') {
-                        this[`_${name}Closure`] = () => {
-                            this[`_${name}Dirty`] = false;
-                            return this[`_${name}`] = val();
-                        };
-                        this[`_${name}Dirty`] = true;
-                    } else {
-                        this[`_${name}`] = val;
-                        this[`_${name}Dirty`] = false;
-                    }
-                    this[`${name}Changed`].emit();
-                }
+                if(val && typeof val === 'object' && val.bindingMark) {
+                    // expr binding
+                    this[`_${name}`].assign(val.expr, val.context, val.thisDep, val.globalDep);
+                } else
+                    this[`_${name}`].assign(val);
             }
         });
     }
@@ -137,6 +205,7 @@ class CoreObject {
             configurable: false,
             enumerable: true
         });
+        return this[name];
     }
 
     hasProperty(prop) {
@@ -168,10 +237,30 @@ class CoreObject {
     }
 }
 
+class Anchors extends CoreObject {
+    constructor(parent, params) {
+        super(parent, params);
+        this.addProperty('centerIn');
+        this.centerInChanged.connect(this.onCenterInChanged.bind(this));
+        this.centerIn = params && params.centerIn? params.centerIn: null;
+
+    }
+
+    onCenterInChanged() { 
+    {
+        console.log('here');
+        this.parent.x = Binding((function () {return ((this.centerIn.width / 2) - (this.parent.width / 2));}).bind(this), this, ['centerIn.width', 'parent.width']);
+        this.parent.y = Binding((function () {return ((this.centerIn.height / 2) - (this.parent.height / 2));}).bind(this), this, ['centerIn.height', 'parent.height']);
+
+    }
+
+
+    }
+
+}
+
 class Item extends CoreObject {
     constructor(parent, params) {
-        params = params? params: {};
-
         super(parent, params);
         this.addProperty('x');
         this.addProperty('y');
@@ -180,6 +269,7 @@ class Item extends CoreObject {
         this.addProperty('rotation');
         this.addProperty('clip');
         this.addProperty('visible');
+        this.addProperty('anchors');
         this.x = params && params.x? params.x: 0;
         this.y = params && params.y? params.y: 0;
         this.width = params && params.width? params.width: 0;
@@ -187,6 +277,16 @@ class Item extends CoreObject {
         this.rotation = params && params.rotation? params.rotation: 0;
         this.clip = params && params.clip? params.clip: false;
         this.visible = params && params.visible? params.visible: true;
+
+        class Item_anchors extends Anchors {
+            constructor(parent, params) {
+                super(parent, params);
+
+            }
+
+
+        }
+        this.anchors = params && params.anchors? params.anchors: new Item_anchors(this);
 
     }
     draw(layer) {
@@ -262,8 +362,6 @@ class Item extends CoreObject {
 
 class Rectangle extends Item {
     constructor(parent, params) {
-        params = params? params: {};
-
         super(parent, params);
         this.addProperty('radius');
         this.addProperty('color');
@@ -310,8 +408,6 @@ class Rectangle extends Item {
 
 class Image extends Item {
     constructor(parent, params) {
-        params = params? params: {};
-
         super(parent, params);
         this.addProperty('source');
         this.sourceChanged.connect(this.onSourceChanged.bind(this));
@@ -346,39 +442,8 @@ class Image extends Item {
 
 }
 
-class Text extends Item {
-    constructor(parent, params) {
-        params = params? params: {};
-
-        super(parent, params);
-        this.addProperty('text');
-        this.addProperty('color');
-        this.text = params && params.text? params.text: '';
-        this.color = params && params.color? params.color: "white";
-
-    }
-    drawImpl(layer) {
-    {
-        let scene=layer.scene, ctx=scene.context
-        let txt=ctx.measureText(this.text)
-        this.width = txt.width;
-        this.height = (txt.actualBoundingBoxAscent + txt.actualBoundingBoxDescent);
-        this.beginNode(layer);
-        ctx.fillStyle = this.color;
-        ctx.fillText(this.text, (-this.width / 2), (this.height / 2));
-        this.drawChildren(layer);
-        this.endNode(layer);
-
-    }
-    }
-
-
-}
-
 class MouseArea extends Item {
     constructor(parent, params) {
-        params = params? params: {};
-
         super(parent, params);
         this.addProperty('containsMouse');
         this.addProperty('mouseX');
@@ -435,137 +500,91 @@ class MouseArea extends Item {
 
 }
 
-class Button extends Rectangle {
-    constructor(parent, params) {
-        params = params? params: {};
-        params.radius = 10;
-        params.clip = true;
-
-        super(parent, params);
-        this.addProperty('text');
-        this.addProperty('hovered');
-        this.addProperty('img');
-        this.addSignal('clicked');
-        this.text = params && params.text? params.text: '';
-        this.hovered = params && params.hovered? params.hovered: () => { return this.resolve('ma').containsMouse; };
-        this.img = params && params.img? params.img: null;
-
-        class Button_Text_0 extends Text {
-            constructor(parent, params) {
-                params = params? params: {};
-                params.color = 'black';
-                params.text = () => { return this.parent.text };;
-
-                super(parent, params);
-                chainConnect(this, 'parent.text', () => {
-                    this._textDirty = true; this.textChanged.emit(); })
-
-            }
-
-
-        }
-        this.appendChild(new Button_Text_0(this));
-
-        class Button_MouseArea_1 extends MouseArea {
-            constructor(parent, params) {
-                params = params? params: {};
-                params.width = () => { return this.parent.width };;
-                params.height = () => { return this.parent.height };;
-
-                super(parent, params);
-                this._id['ma']=this;
-                this.clicked.connect(this.onClicked.bind(this));
-                chainConnect(this, 'parent.width', () => {
-                    this._widthDirty = true; this.widthChanged.emit(); })
-                chainConnect(this, 'parent.height', () => {
-                    this._heightDirty = true; this.heightChanged.emit(); })
-
-            }
-
-            onClicked() { 
-            this.parent.clicked.emit();
-
-
-
-
-            }
-
-        }
-        this.appendChild(new Button_MouseArea_1(this));
-        chainConnect(this.resolve('ma'), 'containsMouse', () => {
-            this._hoveredDirty = true; this.hoveredChanged.emit(); })
-
-    }
-
-
-}
-
 class App extends Rectangle {
     constructor(parent, params) {
-        params = params? params: {};
-        params.color = 'white';
-
         super(parent, params);
         this._id['root']=this;
+        this.addProperty('img');
 
-        class App_Image_0 extends Image {
+        class App_img extends Image {
             constructor(parent, params) {
-                params = params? params: {};
-                params.width = 100;
-                params.height = 100;
-                params.source = './img.png';
-
                 super(parent, params);
-                this._id['rect']=this;
 
             }
 
 
         }
-        this.appendChild(new App_Image_0(this));
+        this.img = params && params.img? params.img: new App_img(this);
+        this.color = 'white';
 
-        class App_Button_1 extends Button {
+        class App_Rectangle_0 extends Rectangle {
             constructor(parent, params) {
-                params = params? params: {};
-                params.x = 200;
-                params.y = 300;
-                params.width = 100;
-                params.height = 50;
-                params.color = () => { return this.hovered?'red':'blue' };;
-                params.text = '羅凱旋';
+                super(parent, params);
+                this.xChanged.connect(this.onXChanged.bind(this));
+                this.x = Binding(() => { return this.resolve('rect').x; }, this, [], [{"object":"rect","prop":"x"}]);
+                this.width = 10;
+                this.height = 10;
+                this.color = 'red';
 
-                class App_Button_1_img extends Image {
+            }
+
+            onXChanged() { 
+            console.log('fuck');
+
+
+
+
+            }
+
+        }
+        this.appendChild(new App_Rectangle_0(this));
+
+        class App_Rectangle_1 extends Rectangle {
+            constructor(parent, params) {
+                super(parent, params);
+                this.width = 100;
+                this.height = 100;
+                this.color = 'black';
+
+                class App_Rectangle_1_Rectangle_0 extends Rectangle {
                     constructor(parent, params) {
-                        params = params? params: {};
-
                         super(parent, params);
+                        this._id['rect']=this;
+                        this.anchors.centerIn = Binding(() => { return this.parent; }, this, ["parent"], []);
+                        this.width = 10;
+                        this.height = 10;
 
                     }
 
 
                 }
-                params.img = new App_Button_1_img();
+                this.appendChild(new App_Rectangle_1_Rectangle_0(this));
 
-                super(parent, params);
-                this.clicked.connect(this.onClicked.bind(this));
-                chainConnect(this, 'hovered', () => {
-                    this._colorDirty = true; this.colorChanged.emit(); })
+                class App_Rectangle_1_MouseArea_1 extends MouseArea {
+                    constructor(parent, params) {
+                        super(parent, params);
+                        this.clicked.connect(this.onClicked.bind(this));
+                        this.width = Binding(() => { return this.parent.width; }, this, ["parent.width"], []);
+                        this.height = Binding(() => { return this.parent.height; }, this, ["parent.height"], []);
+
+                    }
+
+                    onClicked() { 
+                    this.parent.width += 50;
+
+
+
+
+                    }
+
+                }
+                this.appendChild(new App_Rectangle_1_MouseArea_1(this));
 
             }
 
-            onClicked() { 
-            {
-                let myrect=this.resolve('rect')
-                myrect.visible = !myrect.visible;
-                console.log(this.resolve('root').img.source);
-
-            }
-
-
-            }
 
         }
-        this.appendChild(new App_Button_1(this));
+        this.appendChild(new App_Rectangle_1(this));
 
     }
 

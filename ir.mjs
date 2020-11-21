@@ -336,7 +336,8 @@ export class ClassIR {
 
     consumeAttributesDecl(attributes) {
         for(let attr of attributes) {
-            let prop = this.parent.getProperty(attr.name);
+            let attrName = attr.name.split('.')[0];
+            let prop = this.parent.getProperty(attrName);
             if(prop) {
                 if(attr.name in this.attributes)
                     throw new Error(`Re-assign to attribute ${attr.name} (${this.filename})`);
@@ -361,7 +362,7 @@ export class ClassIR {
                 }
                 
             } else
-                throw new Error(`Property ${attr.name} does not exist in base class (${this.filename})`);
+                throw new Error(`Property ${attrName} does not exist in base class (${this.filename})`);
         }
 
     }

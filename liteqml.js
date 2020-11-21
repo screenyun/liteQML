@@ -1,6 +1,6 @@
 import * as IR from './ir.mjs';
 import {Generator} from './es2015.mjs';
-import {chainConnect} from './qmlcore.mjs'
+import {chainConnect, Binding} from './qmlcore.mjs'
 import {dirname, polyfill, writeFile, basename} from './utils.mjs';
 import {Getopt} from './getopt.mjs'
 
@@ -60,6 +60,7 @@ Options:
     const code = generator.generate();
     let sourceCode = `
 ${polyfill}
+${Binding}
 ${chainConnect}
 ${code}
 polyfill().then(() => {

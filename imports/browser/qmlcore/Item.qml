@@ -10,6 +10,8 @@ CoreObject {
 
     property bool visible: true
 
+    property Anchors anchors: Anchors {}
+    
     function draw(layer) {
         if(visible) {
             this.drawImpl(layer)

@@ -1,4 +1,4 @@
-import * as qmlcore from '../qmlcore.mjs';
+import {CoreObject, Binding} from '../qmlcore.mjs';
 function assert(actual, expected, message) {
     if (arguments.length == 1)
         expected = true;
@@ -16,32 +16,44 @@ function assert(actual, expected, message) {
                 (message ? " (" + message + ")" : ""));
 }
 
-let obj = new qmlcore.CoreObject(null);
-let obj2 = new qmlcore.CoreObject(null);
-let obj3 = new qmlcore.CoreObject(null);
-obj2.addProperty('x');
-obj2.x = 100;
-
-obj3.addProperty('x');
-obj3.x = 400;
-
+let obj = new CoreObject(null);
+let obj2 = new CoreObject(null);
+let obj3 = new CoreObject(null);
+obj.addProperty('x');
 obj.addProperty('obj');
-obj.addProperty('y');
+
+assert(`${obj.obj}`, 'null');
+
+obj2.addProperty('x');
+obj2.addProperty('y');
+
+obj3.addProperty('y')
+obj3.y = 1000;
+
 obj.obj = obj2;
-obj.y = () => {
-    return obj.obj.x+300;
-};
-qmlcore.chainConnect(obj, 'obj.x', () => {
-    obj._yDirty = true;
-    obj.yChanged.emit();
-});
-assert(obj.y, 400, `Assertion 1 failed`);
+obj2.x = 100;
+obj2.y = 200;
 
-obj2.x = 200;
-assert(obj.y, 500, `Assertion 2 failed`);
+obj.x = Binding(() => {
+    return obj2.x+obj.obj.y;
+}, ['obj.y'])
+
+let changeTimes = 0;
+obj.xChanged.connect(() => {
+    changeTimes++;
+})
+
+assert(obj.x, 300)
+obj2.y = 400;
+assert(changeTimes, 1)
+assert(obj.x, 500)
+obj2.y = 500;
+assert(changeTimes, 2)
+assert(obj.x, 600)
 obj.obj = obj3;
-assert(obj.y, 700, `Assertion 3 failed`);
-obj2.x = 400;
-assert(obj.y, 700, `Assertion 4 failed`);
-
-console.log('All tests passed')
+assert(changeTimes, 3)
+assert(obj.x, 1100)
+obj2.y = 500            // should have no effect if chainConnect works correctly
+assert(changeTimes, 3)
+assert(obj.x, 1100)
+console.log('all test passed')
