@@ -368,7 +368,8 @@ ${' '.repeat(indent + 4)}this._${aname}Dirty = true; this.${aname}Changed.emit()
                 generator.generate(indent);
                 this.depSrc += generator.depSrc;            
                 this.attrInit += generator.src;
-                initVal = `new ${generator.classIR.objName}()`;
+                // Currently we implement this as attrib's parent
+                initVal = `${generator.classIR.objName}`;
                 break;
         }
         
@@ -379,6 +380,9 @@ ${' '.repeat(indent + 4)}this._${aname}Dirty = true; this.${aname}Changed.emit()
     generatePropInit(pname, pvalue, indent) {
         let initVal;
         let postAssign = '';
+        
+        let isObject = false;
+        let objectNew = `new params.${pname}(this)`;
         switch (pvalue.type) {
             case 'bool':
                 initVal = pvalue.value ? `${pvalue.value}` : 'false';
@@ -394,6 +398,9 @@ ${' '.repeat(indent + 4)}this._${aname}Dirty = true; this.${aname}Changed.emit()
                 initVal = pvalue.value ? `'${pvalue.value}'` : `"white"`;
                 break;
             default:
+                if(pvalue.type[0].match(/^[A-Z]/)) {
+                    isObject = true;
+                }
                 initVal = "null";
                 break;
         }
@@ -417,12 +424,12 @@ ${' '.repeat(indent + 4)}this._${pname}Dirty = true; this.${pname}Changed.emit()
         if (pvalue.initType === 'QObject') {
             let generator = new Generator(pvalue.value, this.generated);
             generator.generate(indent);
-            this.depSrc += generator.depSrc;            
+            this.depSrc += generator.depSrc;
             this.propInit += generator.src;
-            initVal = `new ${generator.classIR.objName}()`;
+            initVal = `new ${generator.classIR.objName}(this)`;
         }
         this.propDecl += `${' '.repeat(indent)}this.addProperty('${pname}');\n`;
-        this.propInit += `${' '.repeat(indent)}this.${pname} = params && params.${pname}? params.${pname}: ${initVal};\n`;
+        this.propInit += `${' '.repeat(indent)}this.${pname} = params && params.${pname}? ${isObject? objectNew: `params.${pname}`}: ${initVal};\n`;
         this.postPropInit += postAssign;
     }
 
