@@ -18,14 +18,10 @@ Rectangle {
         height: 50
         color: hovered? "red": "blue"
         text: "羅凱旋"
-        img: Image {
-            
-        }
 
         onClicked: {
             let myrect = rect;
             myrect.visible = !myrect.visible;
-            console.log(root.img.source)
         }
     }
 
