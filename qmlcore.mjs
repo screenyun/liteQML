@@ -60,6 +60,7 @@ export class PropertyStorage {
         this._owner = owner;
         this._signal = signal;
         this._dispose = [];
+        this._context = owner;
         this.assign(null);
     }
 
@@ -83,29 +84,35 @@ export class PropertyStorage {
                 this._dirty = true;
                 this._thisDep = thisDep;
                 this._globalDep = globalDep;
-                this.register(context);
+                this._context = context;
+                this.register();
             } else {
                 this._cache = this._expr = expr;
                 this._dirty = false;
-                // uncessary to clear globalDep and thisDep
+                this._thisDep = [];
+                this._globalDep = [];
             }
             this._signal.emit();
         }
     }
 
-    register(context) {
+    register() {
+        this.unregister();
         let slot = () => {
             this._dirty = true;
             this._signal.emit();
         };
         if(this._thisDep) {
-            for(const dep of this._thisDep)
-                this._dispose.push(chainConnect(context, dep, slot));
+            for(const dep of this._thisDep) {
+                this._dispose.push(chainConnect(this._context, dep, slot));
+            }
         }
         if(this._globalDep) {
             for(const dep of this._globalDep) {
                 let obj = this._owner.resolve(dep.object);
                 this._dispose.push(chainConnect(obj, dep.prop, slot));
+                if(this._dispose[this._dispose.length-1]===undefined)
+                    debugger;
             }
         }
     }
@@ -137,10 +144,12 @@ export function Binding(expr, ctx, thisDep, globalDep) {
 
 export class CoreObject {
     constructor(parent) {
-        this.addProperty('parent');
+        
         this.children = [];
-        this.parent = parent? parent: null;
         this._id = {};
+        this._properties = [];
+        this.addProperty('parent');
+        this.parent = parent? parent: null;
     }
 
     appendChild(child) {
@@ -152,6 +161,7 @@ export class CoreObject {
     addProperty(name) {
         let signal = this.addSignal(`${name}Changed`);
         this[`_${name}`] = new PropertyStorage(this, signal);
+        this._properties.push(name);
 
         Object.defineProperty(this, name, {
             get: function() {
@@ -178,8 +188,7 @@ export class CoreObject {
     }
 
     hasProperty(prop) {
-        let desc = Object.getOwnPropertyDescriptor(this, prop);
-        return desc && desc.set && desc.get && this[`_${prop}`]!==undefined;
+        return this._properties.indexOf(prop) >= -1;
     }
 
     has(name) {
@@ -204,11 +213,17 @@ export class CoreObject {
         
         return ret;
     }
+
+    registerAll() {
+        for(const prop of this._properties) {
+            this[`_${prop}`].register();
+        }
+    }
 }
 
 CoreObject.summary = {
     props: ['parent', 'children'],
-    signals: ['completed'],
+    signals: ['completed', 'parentChanged'],
     functions: ['appendChild', 'addSignal', 'hasProperty', 'has'],
     deps: [EventEmitter, PropertyStorage]
 };
@@ -217,8 +232,10 @@ CoreObject.summary = {
 // When calling with chained member notation like chainConnect(this, "a.b");
 // it will track dependancies.
 export function chainConnect(target, memberNotation, callback) {
-    if(!target)
+    if(!target) {
+        console.log('target not found')
         return () => {};
+    }
     let dotPos = memberNotation.indexOf('.');
     if(dotPos >= 0) {
         let member = memberNotation.substr(0, dotPos);
@@ -252,7 +269,8 @@ export function chainConnect(target, memberNotation, callback) {
             target[`${member}Changed`].connect(callback);
             return () =>
                 target[`${member}Changed`].disconnect(callback);
-        }
+        } else 
+            throw new Error('No such property');
     }
 }
 

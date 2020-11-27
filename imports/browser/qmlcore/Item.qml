@@ -11,7 +11,9 @@ CoreObject {
     property bool visible: true
 
     property Anchors anchors: Anchors {}
-    
+    property real verticalCenter: height / 2
+    property real horizontalCenter: width / 2
+
     function draw(layer) {
         if(visible) {
             this.drawImpl(layer)

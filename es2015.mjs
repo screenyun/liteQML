@@ -328,7 +328,9 @@ export class Generator {
 ${indentStr}class ${this.classIR.objName} extends ${this.classIR.parent.objName} {
 ${indentStr}    constructor(parent, params) {
 ${indentStr}        super(parent, params);
-${this.idInit}${this.propDecl}${this.signalDecl}${this.handlersConnections}${this.propInit}${this.attrInit}${this.childSrc}${this.postPropInit}${this.attrPostInit}${this.finalize}
+${this.idInit}${this.propDecl}${this.signalDecl}${this.handlersConnections}${this.propInit}${this.attrInit}${this.childSrc}${this.postPropInit}${this.attrPostInit}
+${indentStr}        this.registerAll();
+${this.finalize}
 ${indentStr}    }
 ${this.funcsDecl}
 ${this.handlersDecl}
