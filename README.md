@@ -7,6 +7,5 @@ liteQML brings QML to somewhere without Qt, providing interoperability to other 
 
 
 ```bash
-node liteqml.js App.qml demo/bundle.js
-qjs liteqml.js App.qml demo/bundle.js
+node liteqml.js App.qml -o demo/bundle.js
 ```
