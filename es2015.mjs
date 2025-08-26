@@ -1,5 +1,13 @@
 import { JSClassIR, ClassIR } from './ir.mjs';
-import { parseFunction, parseExpression } from './parser.mjs';
+import { parse } from './parser.mjs';
+
+function parseFunction(code) {
+  return parse(code, {startRule:'FunctionBody'});
+}
+
+function parseExpression(code) {
+  return parse(code, {startRule:'Expression'});
+}
 
 
 function isSymbol(type) {

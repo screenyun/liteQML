@@ -1,6 +1,15 @@
-import {parse, parseFunction, parseExpression} from './parser.mjs';
+import { parse } from './parser.mjs';
 import * as qmlcore from './qmlcore.mjs';
 import {readAllContent, fileExist, compareMTime, simplify_path, dirname, writeFile} from './utils.mjs';
+
+function parseFunction(code) {
+  return parse(code, {startRule:'FunctionBody'});
+}
+
+function parseExpression(code) {
+  return parse(code, {startRule:'Expression'});
+}
+
 
 export function parseFile(filename, noCache) {
     let cachedFilename = `${filename}.json`;
