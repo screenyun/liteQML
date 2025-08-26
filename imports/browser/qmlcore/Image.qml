@@ -22,8 +22,6 @@ Item {
             width = this._imgElement.naturalWidth;
             height = this._imgElement.naturalHeight;
         }.bind(this)
-
-
     }
 
 }
