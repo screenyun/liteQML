@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "liteqml",
     "scripts": {
-        "test": "node ./compiler/liteqml.js App.qml -o  demo/bundle.js"
+        "test": "node ./compiler/liteqml.js demo/App.qml -o  demo/bundle.js"
     },
     "author": "Author name",
     "license": "ISC",
