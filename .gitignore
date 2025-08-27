@@ -2,3 +2,6 @@ liteqml
 liteqml.c
 .vscode
 *.qml.json
+node_modules
+pnpm-lock.yaml
+demo/bundle.js

@@ -1,3 +1,13 @@
 {
-    "type": "module"
+    "name": "liteqml",
+    "version": "1.0.0",
+    "description": "liteqml",
+    "scripts": {
+        "test": "node ./compiler/liteqml.js App.qml -o  demo/bundle.js"
+    },
+    "author": "Author name",
+    "license": "ISC",
+    "dependencies": {
+        "jsdom": "^26.1.0 "
+    }
 }

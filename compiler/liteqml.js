@@ -64,8 +64,9 @@ ${Binding}
 ${chainConnect}
 ${code}
 polyfill().then(() => {
-    if(!('window' in globalThis))
+    if(!('window' in globalThis)) {
         globalThis.window = {};
+    }
     window.qml = {};
     window.qml.rootObject = new ${ir.objName}();
 });

@@ -9,8 +9,9 @@ Item {
 
   Image {
       id: ball
-      // width: 200; height: 200
-      // source: "https://apng.onevcat.com/assets/elephant.png"
+      x: 100; y: 100
+      width: 200; height: 200
+      source: "https://apng.onevcat.com/assets/elephant.gif"
   }
 
   Text {
