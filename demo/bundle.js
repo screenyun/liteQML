@@ -442,7 +442,7 @@ class Image extends Item {
 
     onSourceChanged() { 
     {
-        if (!this._imgElement) this._imgElement = globalThis.document.createElement('img'); 
+        if (!this._imgElement) this._imgElement = document.createElement('img'); 
         this._imgElement.src = this.source;
         this._imgElement.onload = (function () {{
             this.width = this._imgElement.naturalWidth;
@@ -534,6 +534,66 @@ class Rectangle extends Item {
 
 }
 
+class MouseArea extends Item {
+    constructor(parent, params) {
+        super(parent, params);
+        this.addProperty('containsMouse');
+        this.addProperty('mouseX');
+        this.addProperty('mouseY');
+        this.addSignal('positionChanged');
+        this.addSignal('clicked');
+        this.containsMouse = params && params.containsMouse? params.containsMouse: false;
+        this.mouseX = params && params.mouseX? params.mouseX: 0;
+        this.mouseY = params && params.mouseY? params.mouseY: 0;
+
+        this.registerAll();
+        MouseArea.prototype.onCompleted.call(this);
+
+    }
+    drawImpl(layer) {
+    {
+        let hit=layer.hit, ctx=hit.context
+        this.beginNode(layer);
+        ctx.beginPath();
+        ctx.rect((-this.width / 2), (-this.height / 2), this.width, this.height);
+        ctx.fillStyle = hit.getColorFromIndex(this.key);
+        ctx.fill();
+        this.drawChildren(layer);
+        this.endNode(layer);
+
+    }
+    }
+    mouseMoved() {
+    this.positionChanged.emit();
+
+
+    }
+    mouseClicked() {
+    this.clicked.emit();
+
+
+    }
+
+    onCompleted() { 
+    if ((window.qml.mouseArea === undefined)) {
+        window.qml.mouseArea = 0;
+        window.qml.mouseAreas = [this];
+        this.key = 0;
+
+    } else {
+        globalThis.window.qml.mouseArea++;
+        this.key = window.qml.mouseArea;
+        window.qml.mouseAreas.push(this);
+
+    }
+
+
+
+
+    }
+
+}
+
 class App extends Item {
     constructor(parent, params) {
         super(parent, params);
@@ -588,23 +648,31 @@ class App extends Item {
                 this.height = 200;
                 this.color = 'red';
 
+                class App_Rectangle_2_MouseArea_0 extends MouseArea {
+                    constructor(parent, params) {
+                        super(parent, params);
+                        this.clicked.connect(this.onClicked.bind(this));
+                        this.anchors.fill = Binding(() => { return this.parent; }, this, ["parent"], []);
+
+                        this.registerAll();
+
+                    }
+
+                    onClicked() { 
+                    {
+                        this.clicked.emit();
+                        console.log('mouseClicked');
+
+                    }
+
+
+                    }
+
+                }
+                this.appendChild(new App_Rectangle_2_MouseArea_0(this));
+
                 this.registerAll();
 
-            }
-            mouseMoved() {
-            {
-                this.positionChanged.emit();
-                this.moved = !this.moved;
-                console.log('mouseMoved');
-
-            }
-            }
-            mouseClicked() {
-            {
-                this.clicked.emit();
-                console.log('mouseClicked');
-
-            }
             }
 
 

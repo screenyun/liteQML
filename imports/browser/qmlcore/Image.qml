@@ -13,7 +13,7 @@ Item {
 
     onSourceChanged: {
         if(!this._imgElement)
-            this._imgElement = globalThis.document.createElement('img');
+            this._imgElement = document.createElement('img');
         this._imgElement.src = source;
         this._imgElement.onload = function () {
             width = this._imgElement.naturalWidth;

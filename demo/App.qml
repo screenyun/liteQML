@@ -30,15 +30,18 @@ Item {
     height: 200;
     color: "red";
 
-    function mouseMoved() {
-      this.positionChanged.emit();
-      this.moved = !this.moved;
-      console.log('mouseMoved')
-    }
-	
-    function mouseClicked() {
-        this.clicked.emit();
-		    console.log('mouseClicked')
-    }
+    MouseArea {
+       anchors.fill: parent
+      // function mouseMoved() {
+      //   this.positionChanged.emit();
+      //   this.moved = !this.moved;
+      //   console.log('mouseMoved')
+      // }
+    
+      onClicked: {
+          this.clicked.emit();
+          console.log('mouseClicked')
+      }
+    } 
   }
 }
